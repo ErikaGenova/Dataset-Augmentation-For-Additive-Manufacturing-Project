@@ -1,4 +1,3 @@
-# soc_arch_21_csa Car Sharing Assistant (CSA)
 <div id="top"></div>
 <!--
 *** Thanks for checking out the Best-README-Template. If you have a suggestion
@@ -104,6 +103,10 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+
+### Functional Specification
+
+Here's a Short description of what is the focus of your application.
 
 
 <!-- GETTING STARTED -->
