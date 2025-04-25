@@ -16,6 +16,7 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import Subset
 from PIL import Image
 import glob
+import numpy as np
 
 def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
