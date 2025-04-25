@@ -31,8 +31,7 @@ def train(args):
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
     print(f"\nModel loaded!")
-    print(f"\nModel summary:\n{model}")
-
+    
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
