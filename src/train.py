@@ -9,6 +9,8 @@ import pandas as pd
 
 def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+    print("\n Loading data...")
     # Get train and validation loaders with val_split
     train_loader, val_loader = get_dataloaders(
         args.data_dir,
@@ -16,8 +18,15 @@ def train(args):
         val_split=args.val_split,
         num_workers=args.num_workers
     )
+    print("\nData loaded!")
+    print(f"\nTrain samples: {len(train_loader.dataset)}, Validation samples: {len(val_loader.dataset)}")
+
+    # Build model
+    print(f"\nUsing {args.backbone} as backbone")
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
+    print(f"\nModel loaded!")
+    print(f"\nModel summary:\n{model}")
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
