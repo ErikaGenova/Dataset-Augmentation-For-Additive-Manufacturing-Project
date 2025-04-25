@@ -1,10 +1,15 @@
 # training script (CLI interface)
+import sys
+import os
+
+# Add path 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import argparse
 import torch
 from torch import optim, nn
-from src.data_loader import get_dataloaders
-from src.model import build_model
+from data_loader import get_dataloaders
+from model import build_model
 import pandas as pd
 
 def train(args):
