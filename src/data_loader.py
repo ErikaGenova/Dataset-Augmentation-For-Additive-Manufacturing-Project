@@ -111,20 +111,3 @@ if __name__ == '__main__':
 
     print(f"Number of training batches: {len(train_loader)}")
     print(f"Number of validation batches: {len(val_loader)}")
-
-    # Fetch one batch
-    images, labels = next(iter(train_loader))
-    print(f"Sample batch - images shape: {images.shape}, labels: {labels}")
-
-    # Plot sample images
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import torchvision
-    def imshow(img):
-        img = img / 2 + 0.5  # unnormalize
-        npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)), cmap='gray')
-        plt.axis('off')
-        plt.show()
-    imshow(torchvision.utils.make_grid(images))
-    print(f"Labels: {labels}")
