@@ -86,3 +86,30 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
     val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, val_loader
+
+
+if __name__ == '__main__':
+    import argparse
+    # Script to test dataloader sizes and sample batch
+    parser = argparse.ArgumentParser(description='Test DataLoader for PBF defects')
+    parser.add_argument('--data-dir', type=str, required=True, help='Root folder with Defects/ and NoDefects/')
+    parser.add_argument('--batch-size', type=int, default=16)
+    parser.add_argument('--val-split', type=float, default=0.2)
+    parser.add_argument('--num-workers', type=int, default=4)
+    parser.add_argument('--random-seed', type=int, default=42)
+    args = parser.parse_args()
+
+    train_loader, val_loader = get_dataloaders(
+        args.data_dir,
+        batch_size=args.batch_size,
+        val_split=args.val_split,
+        num_workers=args.num_workers,
+        random_seed=args.random_seed
+    )
+
+    print(f"Number of training batches: {len(train_loader)}")
+    print(f"Number of validation batches: {len(val_loader)}")
+
+    # Fetch one batch
+    images, labels = next(iter(train_loader))
+    print(f"Sample batch - images shape: {images.shape}, labels: {labels}")
