@@ -11,7 +11,7 @@ from torchvision import transforms
 data_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # TODO: check mean and std
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
@@ -74,6 +74,8 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
         random_state=random_seed
     )
 
+    # TODO: maybe it's better to perform cross-validation instead of train/val split
+
     train_paths = [file_paths[i] for i in train_idx]
     train_labels = [labels[i] for i in train_idx]
     val_paths = [file_paths[i] for i in val_idx]
@@ -113,3 +115,16 @@ if __name__ == '__main__':
     # Fetch one batch
     images, labels = next(iter(train_loader))
     print(f"Sample batch - images shape: {images.shape}, labels: {labels}")
+
+    # Plot sample images
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import torchvision
+    def imshow(img):
+        img = img / 2 + 0.5  # unnormalize
+        npimg = img.numpy()
+        plt.imshow(np.transpose(npimg, (1, 2, 0)), cmap='gray')
+        plt.axis('off')
+        plt.show()
+    imshow(torchvision.utils.make_grid(images))
+    print(f"Labels: {labels}")
