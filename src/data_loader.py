@@ -90,6 +90,20 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
     return train_loader, val_loader
 
 
+# try k-fold cross-validation
+def get_all_data(data_dir):
+    '''Load file paths and labels for all images in the dataset.'''
+    classes = ['NoDefects', 'Defects']
+    file_paths, labels = [], []
+    for idx, cls in enumerate(classes):
+        folder = os.path.join(data_dir, cls)
+        for ext in ('png', 'jpg', 'jpeg'):
+            files = glob.glob(os.path.join(folder, f'*.{ext}'))
+            file_paths += files
+            labels += [idx] * len(files)
+    return file_paths, labels
+
+
 if __name__ == '__main__':
     import argparse
     # Script to test dataloader sizes and sample batch
