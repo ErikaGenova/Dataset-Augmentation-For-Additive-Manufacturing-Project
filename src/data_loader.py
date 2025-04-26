@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+import torch
 
 # Transforms for training and validation WITHOUT augmentations
 data_transforms = {
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('--data-dir', type=str, required=True, help='Root folder with Defects/ and NoDefects/')
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--val-split', type=float, default=0.2)
-    parser.add_argument('--num-workers', type=int, default=4)
+    parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--random-seed', type=int, default=42)
     parser.add_argument('--compute-stats', action='store_true', help='Compute mean and std of dataset')
     args = parser.parse_args()
