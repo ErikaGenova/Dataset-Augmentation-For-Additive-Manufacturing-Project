@@ -39,7 +39,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     
     # Freeze all layers except the last 2 layers
     for name, param in model.named_parameters():
-        if "layer3" in name or "layer4" in name or "fc" in name:
+        if "layer2" in name or "layer3" in name or "layer4" in name or "fc" in name:
             param.requires_grad = True
         else:
             param.requires_grad = False
