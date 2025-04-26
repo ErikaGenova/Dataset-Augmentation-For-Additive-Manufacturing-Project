@@ -48,7 +48,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     optimizer = optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), 
         lr=args.lr, 
-        weight_decay=1e-4 # L2 regularization
+        weight_decay=3e-4 # L2 regularization
     )
 
     best_val_acc = 0.0
