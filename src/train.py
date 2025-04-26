@@ -46,23 +46,17 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(
-        [
-            {'params': model.layer3.parameters(), 'lr': 1e-4},
-            {'params': model.layer4.parameters(), 'lr': 1e-4},
-            {'params': model.fc.parameters(), 'lr': 1e-3}
-        ], 
-        lr=args.lr, 
-        weight_decay=1e-6 # L2 regularization
+        filter(lambda p: p.requires_grad, model.parameters()), 
+        lr=args.lr,
+        weight_decay=1e-4 # L2 regularization
     )
 
     best_val_acc = 0.0
     logs = []
 
     # Add scheduler
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, 
-        step_size=5, 
-        gamma=0.1
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.1, patience=3, verbose=True
     )
     
     for epoch in range(args.epochs):
