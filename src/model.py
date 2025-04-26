@@ -14,7 +14,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=True):
         model.fc = nn.Linear(in_features, num_classes)
         # Add dropout before the final layer
         model.fc = nn.Sequential(
-            nn.Dropout(0.5),         # Aggiunto Dropout
+            nn.Dropout(0.3),         # Aggiunto Dropout
             nn.Linear(in_features, num_classes)
         )
     elif backbone == 'resnet34':
@@ -25,7 +25,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=True):
         model.fc = nn.Linear(in_features, num_classes)
         # Add dropout before the final layer
         model.fc = nn.Sequential(
-            nn.Dropout(0.5),         # Aggiunto anche qui
+            nn.Dropout(0.3),         # Aggiunto anche qui
             nn.Linear(in_features, num_classes)
         )
     elif backbone == 'resnet18':
@@ -36,7 +36,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=True):
         model.fc = nn.Linear(in_features, num_classes)
         # Add dropout before the final layer
         model.fc = nn.Sequential(
-            nn.Dropout(0.5),         # Aggiunto anche qui
+            nn.Dropout(0.3),         # Aggiunto anche qui
             nn.Linear(in_features, num_classes)
         )
     else:
