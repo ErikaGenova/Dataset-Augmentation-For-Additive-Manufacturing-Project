@@ -52,7 +52,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
             {'params': model.fc.parameters(), 'lr': 1e-3}
         ], 
         lr=args.lr, 
-        weight_decay=1e-3 # L2 regularization
+        weight_decay=1e-6 # L2 regularization
     )
 
     best_val_acc = 0.0
