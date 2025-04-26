@@ -12,11 +12,11 @@ import torch
 data_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5]) # TODO: check mean and std
+        transforms.Normalize(mean=[0.5830], std=[0.2075]) # mean and std computed from the dataset
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=[0.5830], std=[0.2075])
     ])
 }
 
@@ -28,11 +28,11 @@ data_transforms = {
         transforms.RandomVerticalFlip(),
         transforms.RandomAdjustSharpness(sharpness_factor=2),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=[0.5830], std=[0.2075])
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=[0.5830], std=[0.2075])
     ])
 }
 """
