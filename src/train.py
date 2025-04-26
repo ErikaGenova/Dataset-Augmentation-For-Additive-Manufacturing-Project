@@ -93,7 +93,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
         val_acc = val_correct / val_total
 
         # Update learning rate
-        scheduler.step()
+        scheduler.step(val_loss)
 
         # Log metrics
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc])
