@@ -10,10 +10,14 @@ from torchvision import transforms
 # Transforms for training and validation WITHOUT augmentations
 data_transforms = {
     'train': transforms.Compose([
+        transforms.RandomHorizontalFlip(),            # flip casuale orizzontale
+        transforms.RandomRotation(10),                # rotazione casuale di +/- 10°
+        transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),  # crop casuale e resize
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5]) # TODO: check mean and std
+        transforms.Normalize(mean=[0.5], std=[0.5])
     ]),
     'val': transforms.Compose([
+        transforms.Resize(224),         # Ridimensiona direttamente senza augmentation
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
