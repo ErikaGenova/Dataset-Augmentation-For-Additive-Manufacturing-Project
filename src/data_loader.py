@@ -11,8 +11,6 @@ from torchvision import transforms
 data_transforms = {
     'train': transforms.Compose([
         transforms.RandomHorizontalFlip(),            # horizontal flip
-        transforms.RandomVerticalFlip(),              # vertical flip
-        transforms.RandomRotation(10),                # random rotation
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ]),
