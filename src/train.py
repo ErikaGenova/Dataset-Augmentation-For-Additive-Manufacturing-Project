@@ -111,16 +111,13 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
 
-    # Freeze all layers except the last fully connected layer
-    # TODO check if it's better to freeze the layers or not
-    """
+    # Freeze all layers except the last fully connected layer to avoid overfitting
     for name, param in model.named_parameters():
         if not name.startswith('fc'):
             param.requires_grad = False
-    """
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=1e-4) # L2 regularization
 
     best_val_acc = 0.0
     logs = []
