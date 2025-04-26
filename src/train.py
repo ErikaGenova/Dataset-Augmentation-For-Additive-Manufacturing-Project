@@ -25,6 +25,7 @@ def get_class_weights(labels):
     total_samples = len(labels)
     num_classes = len(class_counts)
     class_weights = {cls: total_samples / (num_classes * count) for cls, count in class_counts.items()}
+    class_weights = torch.tensor([class_weights[i] for i in range(num_classes)], dtype=torch.torch.float32)
     return class_weights
 
 def train(args):
@@ -103,7 +104,7 @@ def train(args):
 
 
 def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights):
-    '''Allena un fold del k-fold.'''
+    '''Train one fold of the K-Fold cross-validation.'''
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
                                    [labels[i] for i in train_idx],
@@ -132,6 +133,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         else:
             param.requires_grad = False
 
+    class_weights = class_weights.to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=1e-4) # L2 regularization
 
@@ -143,7 +145,10 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     
     for epoch in range(args.epochs):
         # Training loop
+        print("\n-- train --")
         model.train()
+        pred_tot = []
+        label_tot = []
         running_loss, correct, total = 0.0, 0, 0
         for images, targets in train_loader:
             images, targets = images.to(device), targets.to(device)
@@ -156,10 +161,17 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             _, preds = torch.max(outputs, 1)
             correct += (preds == targets).sum().item()
             total += targets.size(0)
+            pred_tot.extend([p.item() for p in preds])
+            label_tot.extend([t.item() for t in targets])
         train_loss = running_loss / total
         train_acc = correct / total
+        print("Predictions: ", pred_tot)
+        print("Labels: ", label_tot)
 
         # Validation loop
+        print("\n-- val --")
+        pred_tot = []
+        label_tot = []
         model.eval()
         val_running_loss, val_correct, val_total = 0.0, 0, 0
         with torch.no_grad():
@@ -171,8 +183,13 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
                 _, preds = torch.max(outputs, 1)
                 val_correct += (preds == targets).sum().item()
                 val_total += targets.size(0)
+                pred_tot.extend([p.item() for p in preds])
+                label_tot.extend([t.item() for t in targets])
         val_loss = val_running_loss / val_total
         val_acc = val_correct / val_total
+
+        print("Predictions: ", pred_tot)
+        print("Labels: ", label_tot)
 
         # Update learning rate
         scheduler.step()
