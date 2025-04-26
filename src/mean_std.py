@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 
 # 1. Dataset and DataLoader that only convert images to tensors (no normalization)
 dataset = datasets.ImageFolder(
-    root='content/images',
+    root='content/mla_project/images',
     transform=transforms.ToTensor()  # ToTensor() scales pixels to [0,1]
 )
 loader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=4)
