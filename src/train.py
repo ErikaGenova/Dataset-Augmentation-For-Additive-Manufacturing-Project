@@ -108,7 +108,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Model
-    model = build_model(backbone=args.backbone, weights=True)
+    model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
 
     # Freeze all layers except the last fully connected layer
