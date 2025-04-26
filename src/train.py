@@ -37,9 +37,9 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
     
-    # Freeze all layers except the last 2 layers
+    # Freeze all layers except the last layer
     for name, param in model.named_parameters():
-        if "layer4" in name or "fc" in name:
+        if "fc" in name:
             param.requires_grad = True
         else:
             param.requires_grad = False
@@ -48,7 +48,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     optimizer = optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), 
         lr=args.lr, 
-        weight_decay=3e-4 # L2 regularization
+        weight_decay=1e-3 # L2 regularization
     )
 
     best_val_acc = 0.0
