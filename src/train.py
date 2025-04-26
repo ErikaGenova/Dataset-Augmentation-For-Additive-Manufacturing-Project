@@ -13,6 +13,8 @@ from model import build_model
 import pandas as pd
 
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 from torch.utils.data import Subset
 from PIL import Image
 import glob
@@ -27,6 +29,20 @@ def get_class_weights(labels):
     class_weights = {cls: total_samples / (num_classes * count) for cls, count in class_counts.items()}
     class_weights = torch.tensor([class_weights[i] for i in range(num_classes)], dtype=torch.torch.float32)
     return class_weights
+
+def plot_confusion_matrix(y_true, y_pred, fold):
+    cm = confusion_matrix(y_true, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    fig, ax = plt.subplots(figsize=(8, 8))
+    disp.plot(cmap='Blues', ax=ax, values_format='d')
+    plt.title(f"Confusion Matrix - Fold {fold}")
+
+    # Save the confusion matrix as an image
+    plt.savefig(f"confusion_matrix_fold{fold}.png")
+    plt.close(fig)  # Close the figure to avoid blocking
+
+    print(f"Confusion matrix for Fold {fold} saved as 'confusion_matrix_fold{fold}.png'")
+    return cm
 
 def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
