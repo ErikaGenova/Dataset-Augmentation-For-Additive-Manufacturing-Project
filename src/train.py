@@ -190,6 +190,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         label_tot = []
         model.eval()
         val_running_loss, val_correct, val_total = 0.0, 0, 0
+        all_targets, all_preds = [], []
         with torch.no_grad():
             for images, targets in val_loader:
                 images, targets = images.to(device), targets.to(device)
@@ -199,6 +200,10 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
                 _, preds = torch.max(outputs, 1)
                 val_correct += (preds == targets).sum().item()
                 val_total += targets.size(0)
+                all_targets.extend(targets.cpu().numpy())
+                all_preds.extend(preds.cpu().numpy())
+
+                # for debugging
                 pred_tot.extend([p.item() for p in preds])
                 label_tot.extend([t.item() for t in targets])
         val_loss = val_running_loss / val_total
@@ -207,17 +212,28 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         print("Predictions: ", pred_tot)
         print("Labels: ", label_tot)
 
+        # Calculate precision, recall, and F1-score
+        precision = precision_score(all_targets, all_preds, average='weighted')
+        recall = recall_score(all_targets, all_preds, average='weighted')
+        f1 = f1_score(all_targets, all_preds, average='weighted')
+
         # Update learning rate
         scheduler.step()
 
         # Log metrics
-        logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc])
-        print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}")
-
+        logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc, precision, recall, f1])
+        print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | "
+              f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
+              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f} | "
+              f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+        
         # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
+
+        # Plot Confusion matrix
+        plot_confusion_matrix(all_targets, all_preds, fold)
 
     return logs
 
@@ -230,7 +246,7 @@ def train_kfold(args):
     labels = np.array(labels)
     kf = StratifiedKFold(n_splits=args.k_folds, shuffle=True, random_state=42)
 
-    all_logs = []
+    all_logs, fold_accuracies = [], []
 
     # Compute class weights
     class_weights = get_class_weights(labels)
@@ -239,12 +255,16 @@ def train_kfold(args):
         print(f"\n===== Fold {fold} =====")
         logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights)
         all_logs += [[fold] + row for row in logs]
+        fold_accuracies.append(max([log[4] for log in logs]))  # Collect best accuracy for each fold
+
+    # Calculate average accuracy across folds
+    avg_accuracy = sum(fold_accuracies) / len(fold_accuracies)
+    print(f"\nAverage Accuracy across {args.k_folds} folds: {avg_accuracy:.4f}")
 
     # Save all logs to CSV
-    df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc'])
+    df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
     df.to_csv('kfold_logs.csv', index=False)
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
-
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser("Train PBF defect detector")
