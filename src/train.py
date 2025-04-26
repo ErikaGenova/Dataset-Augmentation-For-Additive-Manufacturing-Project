@@ -95,7 +95,7 @@ def train(args):
 
 def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     '''Allena un fold del k-fold.'''
-    # Dataset e loader
+    # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
                                    [labels[i] for i in train_idx],
                                    transform=data_transforms['train'])
@@ -107,14 +107,17 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
-    # Modello
-    model = build_model(backbone=args.backbone, pretrained=True)
+    # Model
+    model = build_model(backbone=args.backbone, weights=True)
     model.to(device)
 
-    # Congelamento dei pesi (freeze) tranne l'ultimo layer
+    # Freeze all layers except the last fully connected layer
+    # TODO check if it's better to freeze the layers or not
+    """
     for name, param in model.named_parameters():
         if not name.startswith('fc'):
             param.requires_grad = False
+    """
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
@@ -156,7 +159,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}")
 
-        # Salva il modello del fold
+        # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
@@ -179,12 +182,10 @@ def train_kfold(args):
         logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold)
         all_logs += [[fold] + row for row in logs]
 
-    # Salva tutte le metriche
+    # Save all logs to CSV
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc'])
     df.to_csv('kfold_logs.csv', index=False)
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
-
-
 
 
 if __name__ == '__main__':
@@ -205,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--backbone', type=str, default='resnet50')
-    parser.add_argument('--num-workers', type=int, default=4)
+    parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     args = parser.parse_args()
