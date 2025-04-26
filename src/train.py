@@ -112,8 +112,15 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     model.to(device)
 
     # Freeze all layers except the last fully connected layer to avoid overfitting
+    """
     for name, param in model.named_parameters():
         if not name.startswith('fc'):
+            param.requires_grad = False
+    """
+    for name, param in model.named_parameters():
+        if "layer4" in name or "fc" in name:
+            param.requires_grad = True
+        else:
             param.requires_grad = False
 
     criterion = nn.CrossEntropyLoss()
@@ -122,7 +129,11 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     best_val_acc = 0.0
     logs = []
 
+    # Add scheduler
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    
     for epoch in range(args.epochs):
+        # Training loop
         model.train()
         running_loss, correct, total = 0.0, 0, 0
         for images, targets in train_loader:
@@ -139,6 +150,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
         train_loss = running_loss / total
         train_acc = correct / total
 
+        # Validation loop
         model.eval()
         val_running_loss, val_correct, val_total = 0.0, 0, 0
         with torch.no_grad():
@@ -153,6 +165,10 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
         val_loss = val_running_loss / val_total
         val_acc = val_correct / val_total
 
+        # Update learning rate
+        scheduler.step()
+
+        # Log metrics
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}")
 
