@@ -37,9 +37,9 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
     
-    # Freeze all layers except the last layer
+    # Freeze all layers except the last 2 layers
     for name, param in model.named_parameters():
-        if "fc" in name:
+        if "layer3" in name or "layer4" in name or "fc" in name:
             param.requires_grad = True
         else:
             param.requires_grad = False
