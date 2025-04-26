@@ -113,7 +113,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
     
     # Freeze all layers except the last 2 layers
     for name, param in model.named_parameters():
-        if "layer3" in name or "layer4" in name or "fc" in name:
+        if "fc" in name:
             param.requires_grad = True
         else:
             param.requires_grad = False
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
     parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
-    parser.add_argument('--is_k-fold', type=bool, default=True, help='Use k-fold cross-validation')
+    parser.add_argument('--is_k_fold', type=bool, default=True, help='Use k-fold cross-validation')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     args = parser.parse_args()
 
