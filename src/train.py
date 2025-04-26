@@ -46,7 +46,11 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(
-        filter(lambda p: p.requires_grad, model.parameters()), 
+        [
+            {'params': model.layer3.parameters(), 'lr': 1e-4},
+            {'params': model.layer4.parameters(), 'lr': 1e-4},
+            {'params': model.fc.parameters(), 'lr': 1e-3}
+        ], 
         lr=args.lr, 
         weight_decay=1e-3 # L2 regularization
     )
