@@ -17,6 +17,15 @@ from torch.utils.data import Subset
 from PIL import Image
 import glob
 import numpy as np
+from collections import Counter
+
+def get_class_weights(labels):
+    '''Compute class weights for imbalanced dataset.'''
+    class_counts = Counter(labels)
+    total_samples = len(labels)
+    num_classes = len(class_counts)
+    class_weights = {cls: total_samples / (num_classes * count) for cls, count in class_counts.items()}
+    return class_weights
 
 def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -93,7 +102,7 @@ def train(args):
     print('Training completed')
 
 
-def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
+def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights):
     '''Allena un fold del k-fold.'''
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
@@ -123,7 +132,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold):
         else:
             param.requires_grad = False
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=1e-4) # L2 regularization
 
     best_val_acc = 0.0
@@ -190,9 +199,12 @@ def train_kfold(args):
 
     all_logs = []
 
+    # Compute class weights
+    class_weights = get_class_weights(labels)
+
     for fold, (train_idx, val_idx) in enumerate(kf.split(file_paths, labels), 1):
         print(f"\n===== Fold {fold} =====")
-        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold)
+        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights)
         all_logs += [[fold] + row for row in logs]
 
     # Save all logs to CSV
