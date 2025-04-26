@@ -21,7 +21,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=True):
         model.fc = nn.Linear(in_features, num_classes)
         # Add dropout layer
         model.fc = nn.Sequential(
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.4),
             nn.Linear(in_features, num_classes)
         )
 
@@ -33,7 +33,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=True):
         model.fc = nn.Linear(in_features, num_classes)
         # Add dropout layer
         model.fc = nn.Sequential(
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.4),
             nn.Linear(in_features, num_classes)
         )
 
