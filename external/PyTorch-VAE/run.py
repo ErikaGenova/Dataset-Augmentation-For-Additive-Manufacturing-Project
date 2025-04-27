@@ -66,9 +66,6 @@ runner = Trainer(logger=tb_logger,
                  ],
                 #  strategy=DDPPlugin(find_unused_parameters=False),
                 strategy={"type": "ddp", "find_unused_parameters": False},
-                accelerator="gpu" if torch.cuda.is_available() else "cpu",  # Use GPU if available
-                devices=torch.cuda.device_count() if torch.cuda.is_available() else 1,  # Number of GPUs or CPUs
-    
                  **config['trainer_params'])
 
 

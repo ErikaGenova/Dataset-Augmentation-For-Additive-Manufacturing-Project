@@ -21,9 +21,14 @@ exp_params:
   kld_weight:   2.5e-4
   manual_seed:  42
 
+# trainer_params:
+#   gpus:       [0]     # or [0,1] if you have multiple
+#   max_epochs: 100
+
 trainer_params:
-  gpus:       [0]     # or [0,1] if you have multiple
-  max_epochs: 100
+  accelerator: gpu      # instead of gpus
+  devices: 1            # number of GPUs
+  max_epochs: 50
 
 logging_params:
   save_dir: "/content/vae_logs/"

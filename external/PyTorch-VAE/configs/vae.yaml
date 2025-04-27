@@ -19,9 +19,14 @@ exp_params:
   kld_weight: 0.00025
   manual_seed: 1265
 
+# trainer_params:
+#   gpus: [1]
+#   max_epochs: 100
+
 trainer_params:
-  # gpus: [1]
-  max_epochs: 100
+  accelerator: gpu      # instead of gpus
+  devices: 1            # number of GPUs
+  max_epochs: 50
 
 logging_params:
   save_dir: "logs/"
