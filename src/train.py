@@ -35,13 +35,13 @@ def plot_confusion_matrix(y_true, y_pred, fold):
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     fig, ax = plt.subplots(figsize=(8, 8))
     disp.plot(cmap='Blues', ax=ax, values_format='d')
-    plt.title(f"Confusion Matrix - Fold {fold}")
+    plt.title(f"Confusion Matrix - Fold {fold} (Validation)")
 
     # Save the confusion matrix as an image
     plt.savefig(f"confusion_matrix_fold{fold}.png")
     plt.close(fig)  # Close the figure to avoid blocking
 
-    print(f"Confusion matrix for Fold {fold} saved as 'confusion_matrix_fold{fold}.png'")
+    print(f"Confusion matrix for Fold {fold} (Validation) saved as 'confusion_matrix_fold{fold}.png'")
     return cm
 
 def train(args):
@@ -119,12 +119,12 @@ def train(args):
     print('Training completed')
 
 
-def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights):
+def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug=False):
     '''Train one fold of the K-Fold cross-validation.'''
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
                                    [labels[i] for i in train_idx],
-                                   transform=data_transforms['train'])
+                                   transform=data_transforms['train'] )
 
     val_dataset = DefectDataset([file_paths[i] for i in val_idx],
                                  [labels[i] for i in val_idx],
@@ -161,7 +161,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     
     for epoch in range(args.epochs):
         # Training loop
-        print("\n-- train --")
+        #print("\n-- train --")
         model.train()
         pred_tot = []
         label_tot = []
@@ -181,11 +181,11 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             label_tot.extend([t.item() for t in targets])
         train_loss = running_loss / total
         train_acc = correct / total
-        print("Predictions: ", pred_tot)
-        print("Labels: ", label_tot)
+        #print("Predictions: ", pred_tot)
+        #print("Labels: ", label_tot)
 
         # Validation loop
-        print("\n-- val --")
+        #print("\n-- val --")
         pred_tot = []
         label_tot = []
         model.eval()
@@ -209,8 +209,8 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         val_loss = val_running_loss / val_total
         val_acc = val_correct / val_total
 
-        print("Predictions: ", pred_tot)
-        print("Labels: ", label_tot)
+        #print("Predictions: ", pred_tot)
+        #print("Labels: ", label_tot)
 
         # Calculate precision, recall, and F1-score
         precision = precision_score(all_targets, all_preds, average='weighted')
@@ -232,7 +232,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             best_val_acc = val_acc
             torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
 
-        # Plot Confusion matrix
+        # Plot Validation Confusion matrix
         plot_confusion_matrix(all_targets, all_preds, fold)
 
     return logs
@@ -251,15 +251,18 @@ def train_kfold(args):
     # Compute class weights
     class_weights = get_class_weights(labels)
 
+    # check augmentation
+    aug = True if args.aug == 'True' else False
+
     for fold, (train_idx, val_idx) in enumerate(kf.split(file_paths, labels), 1):
         print(f"\n===== Fold {fold} =====")
-        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights)
+        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug)
         all_logs += [[fold] + row for row in logs]
         fold_accuracies.append(max([log[4] for log in logs]))  # Collect best accuracy for each fold
 
     # Calculate average accuracy across folds
     avg_accuracy = sum(fold_accuracies) / len(fold_accuracies)
-    print(f"\nAverage Accuracy across {args.k_folds} folds: {avg_accuracy:.4f}")
+    print(f"\nAverage Training Accuracy across {args.k_folds} folds: {avg_accuracy:.4f}")
 
     # Save all logs to CSV
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
@@ -267,18 +270,7 @@ def train_kfold(args):
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser("Train PBF defect detector")
-    # parser.add_argument('--data-dir', type=str, required=True)
-    # parser.add_argument('--batch-size', type=int, default=16)
-    # parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
-    # parser.add_argument('--epochs', type=int, default=20)
-    # parser.add_argument('--lr', type=float, default=1e-4)
-    # parser.add_argument('--backbone', type=str, default='resnet50')
-    # parser.add_argument('--num-workers', type=int, default=4)
-    # parser.add_argument('--checkpoint', type=str, default='best_model.pth', help='Path to save best model')
-    # args = parser.parse_args()
-    # train(args)
-    parser = argparse.ArgumentParser("Train PBF defect detector with K-Fold")
+    parser = argparse.ArgumentParser("Train PBF defect detector")
     parser.add_argument('--data-dir', type=str, required=True)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--epochs', type=int, default=20)
@@ -286,7 +278,15 @@ if __name__ == '__main__':
     parser.add_argument('--backbone', type=str, default='resnet50')
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
+    parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
+    parser.add_argument('--is_kfold', action='store_true', help='Use K-Fold cross-validation')
+    parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
     args = parser.parse_args()
 
-    train_kfold(args)
+    if args.is_kfold:
+        print("Training with K-Fold cross-validation")
+        train_kfold(args)
+    else:
+        print("Training with single train/val split")
+        train(args)
