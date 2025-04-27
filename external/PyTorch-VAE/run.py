@@ -40,8 +40,7 @@ experiment = VAEXperiment(model,
                           config['exp_params'])
 
 # data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
-script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, "../images")
+data_path = '/content/mla_project/images'
 
 data = VAEDataset(
     data_path=data_path,
