@@ -12,7 +12,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning import seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from dataset import VAEDataset
-from pytorch_lightning.plugins import DDPPlugin
+# from pytorch_lightning.plugins import DDPPlugin
 
 
 parser = argparse.ArgumentParser(description='Generic runner for VAE models')
