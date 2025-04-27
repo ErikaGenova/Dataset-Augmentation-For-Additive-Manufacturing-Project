@@ -12,6 +12,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning import seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from dataset import VAEDataset
+import torch
 # from pytorch_lightning.plugins import DDPPlugin
 
 
@@ -65,6 +66,9 @@ runner = Trainer(logger=tb_logger,
                  ],
                 #  strategy=DDPPlugin(find_unused_parameters=False),
                 strategy={"type": "ddp", "find_unused_parameters": False},
+                accelerator="gpu" if torch.cuda.is_available() else "cpu",  # Use GPU if available
+                devices=torch.cuda.device_count() if torch.cuda.is_available() else 1,  # Number of GPUs or CPUs
+    
                  **config['trainer_params'])
 
 
