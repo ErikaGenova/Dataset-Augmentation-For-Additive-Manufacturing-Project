@@ -40,9 +40,11 @@ experiment = VAEXperiment(model,
                           config['exp_params'])
 
 # data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(script_dir, "../images")
 
 data = VAEDataset(
-    data_path="../images",
+    data_path=data_path,
     train_batch_size=16,
     val_batch_size=16,
     patch_size=(128, 128),
@@ -51,7 +53,7 @@ data = VAEDataset(
 )
 
 # to debug
-data_path = "../images"
+
 if not os.path.exists(data_path):
     print(f"Error: The path '{data_path}' does not exist.")
 else:
