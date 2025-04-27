@@ -50,6 +50,14 @@ data = VAEDataset(
     pin_memory=len(config['trainer_params']['gpus']) != 0
 )
 
+# to debug
+data_path = "../images"
+if not os.path.exists(data_path):
+    print(f"Error: The path '{data_path}' does not exist.")
+else:
+    print(f"Path '{data_path}' is valid.")
+
+
 data.setup()
 runner = Trainer(logger=tb_logger,
                  callbacks=[

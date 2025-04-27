@@ -43,8 +43,10 @@ class DefectsDataset(Dataset):
         labels = []
         for idx, cls in enumerate(self.classes):
             folder = os.path.join(self.data_dir, cls)
+            print(f"Checking folder: {folder}")  # Debug print
             for ext in ('png', 'jpg', 'jpeg'):
                 files = glob.glob(os.path.join(folder, f'*.{ext}'))
+                print(f"Found {len(files)} files with extension {ext} in {folder}")  # Debug print
                 file_paths += files
                 labels += [idx] * len(files)
         
