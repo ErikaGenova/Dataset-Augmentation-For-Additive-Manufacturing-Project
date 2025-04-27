@@ -8,7 +8,8 @@ from experiment import VAEXperiment
 import torch.backends.cudnn as cudnn
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.utilities.seed import seed_everything
+# from pytorch_lightning.utilities.seed import seed_everything
+from pytorch_lightning import seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from dataset import VAEDataset
 from pytorch_lightning.plugins import DDPPlugin
@@ -40,7 +41,8 @@ experiment = VAEXperiment(model,
                           config['exp_params'])
 
 # data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
-data_path = '/content/mla_project/images'
+
+data_path = '/content/mla_project/images'  #change this to your dataset path in colab if needed
 
 data = VAEDataset(
     data_path=data_path,
@@ -50,13 +52,6 @@ data = VAEDataset(
     num_workers=4,
     pin_memory=len(config['trainer_params']['gpus']) != 0
 )
-
-# to debug
-
-if not os.path.exists(data_path):
-    print(f"Error: The path '{data_path}' does not exist.")
-else:
-    print(f"Path '{data_path}' is valid.")
 
 
 data.setup()

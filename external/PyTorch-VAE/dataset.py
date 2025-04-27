@@ -43,10 +43,8 @@ class DefectsDataset(Dataset):
         labels = []
         for idx, cls in enumerate(self.classes):
             folder = os.path.join(self.data_dir, cls)
-            print(f"Checking folder: {folder}")  # Debug print
             for ext in ('png', 'jpg', 'jpeg'):
                 files = glob.glob(os.path.join(folder, f'*.{ext}'))
-                print(f"Found {len(files)} files with extension {ext} in {folder}")  # Debug print
                 file_paths += files
                 labels += [idx] * len(files)
         
@@ -140,6 +138,7 @@ class VAEDataset(LightningDataModule):
         self.pin_memory = pin_memory
 
     def setup(self, stage: Optional[str] = None) -> None:
+        print(f"Setting up datasets for stage: {stage}")
         train_transforms = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.Resize(self.patch_size),
