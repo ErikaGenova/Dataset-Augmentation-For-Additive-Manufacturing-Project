@@ -1,4 +1,5 @@
 import os
+from sklearn.model_selection import train_test_split
 import torch
 from torch import Tensor
 from pathlib import Path
@@ -12,16 +13,53 @@ import zipfile
 
 
 # Add your custom dataset class here
-class MyDataset(Dataset):
-    def __init__(self):
-        pass
+class DefectsDataset(Dataset):
+    def __init__(self, data_dir: str, split: str, transform: Optional[Callable] = None, val_split: float = 0.2, random_seed: int = 42):
+        self.data_dir = data_dir
+        self.transform = transform
+        self.classes = ['NoDefects', 'Defects']
+        self.file_paths, self.labels = self._load_data()
+        
+        # Split train/val
+        train_idx, val_idx = train_test_split(
+            list(range(len(self.file_paths))),
+            test_size=val_split,
+            stratify=self.labels,
+            random_state=random_seed
+        )
+        
+        if split == 'train':
+            selected_idx = train_idx
+        else:
+            selected_idx = val_idx
+
+        self.file_paths = [self.file_paths[i] for i in selected_idx]
+        self.labels = [self.labels[i] for i in selected_idx]
     
-    
+    def _load_data(self):
+        file_paths = []
+        labels = []
+        for idx, cls in enumerate(self.classes):
+            folder = os.path.join(self.data_dir, cls)
+            for ext in ('png', 'jpg', 'jpeg'):
+                files = glob.glob(os.path.join(folder, f'*.{ext}'))
+                file_paths += files
+                labels += [idx] * len(files)
+        
+        # Print the total number of images loaded
+        print(f"Total images loaded: {len(file_paths)}")
+
+        return file_paths, labels
+
     def __len__(self):
-        pass
-    
+        return len(self.file_paths)
+
     def __getitem__(self, idx):
-        pass
+        img_path = self.file_paths[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, 0.0  # Returning dummy label because VAE needs only the image
 
 
 class MyCelebA(CelebA):
@@ -98,6 +136,31 @@ class VAEDataset(LightningDataModule):
         self.pin_memory = pin_memory
 
     def setup(self, stage: Optional[str] = None) -> None:
+        train_transforms = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.Resize(self.patch_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5830], std=[0.2075])  # your computed mean and std
+        ])
+
+        val_transforms = transforms.Compose([
+            transforms.Resize(self.patch_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5830], std=[0.2075])
+        ])
+
+        self.train_dataset = DefectsDataset(
+            data_dir=self.data_dir,
+            split='train',
+            transform=train_transforms,
+        )
+
+        self.val_dataset = DefectsDataset(
+            data_dir=self.data_dir,
+            split='val',
+            transform=val_transforms,
+        )
+
 #       =========================  OxfordPets Dataset  =========================
             
 #         train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
@@ -126,30 +189,30 @@ class VAEDataset(LightningDataModule):
         
 #       =========================  CelebA Dataset  =========================
     
-        train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                              transforms.CenterCrop(148),
-                                              transforms.Resize(self.patch_size),
-                                              transforms.ToTensor(),])
+        # train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
+        #                                       transforms.CenterCrop(148),
+        #                                       transforms.Resize(self.patch_size),
+        #                                       transforms.ToTensor(),])
         
-        val_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                            transforms.CenterCrop(148),
-                                            transforms.Resize(self.patch_size),
-                                            transforms.ToTensor(),])
+        # val_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
+        #                                     transforms.CenterCrop(148),
+        #                                     transforms.Resize(self.patch_size),
+        #                                     transforms.ToTensor(),])
         
-        self.train_dataset = MyCelebA(
-            self.data_dir,
-            split='train',
-            transform=train_transforms,
-            download=False,
-        )
+        # self.train_dataset = MyCelebA(
+        #     self.data_dir,
+        #     split='train',
+        #     transform=train_transforms,
+        #     download=False,
+        # )
         
-        # Replace CelebA with your dataset
-        self.val_dataset = MyCelebA(
-            self.data_dir,
-            split='test',
-            transform=val_transforms,
-            download=False,
-        )
+        # # Replace CelebA with your dataset
+        # self.val_dataset = MyCelebA(
+        #     self.data_dir,
+        #     split='test',
+        #     transform=val_transforms,
+        #     download=False,
+        # )
 #       ===============================================================
         
     def train_dataloader(self) -> DataLoader:

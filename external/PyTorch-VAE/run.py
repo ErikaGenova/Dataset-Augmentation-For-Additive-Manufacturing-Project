@@ -39,7 +39,16 @@ model = vae_models[config['model_params']['name']](**config['model_params'])
 experiment = VAEXperiment(model,
                           config['exp_params'])
 
-data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
+# data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
+
+data = VAEDataset(
+    data_path="../images",
+    train_batch_size=16,
+    val_batch_size=16,
+    patch_size=(128, 128),
+    num_workers=4,
+    pin_memory=len(config['trainer_params']['gpus']) != 0
+)
 
 data.setup()
 runner = Trainer(logger=tb_logger,
