@@ -1,3 +1,4 @@
+import glob
 import os
 from sklearn.model_selection import train_test_split
 import torch
@@ -10,6 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import CelebA
 import zipfile
+from PIL import Image
 
 
 # Add your custom dataset class here
