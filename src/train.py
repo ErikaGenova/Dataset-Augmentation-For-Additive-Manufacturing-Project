@@ -30,7 +30,8 @@ def get_class_weights(labels):
     class_weights = torch.tensor([class_weights[i] for i in range(num_classes)], dtype=torch.torch.float32)
     return class_weights
 
-def plot_confusion_matrix(y_true, y_pred, fold):
+def plot_confusion_matrix(y_true, y_pred, fold, epoch):
+    """
     cm = confusion_matrix(y_true, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -42,6 +43,16 @@ def plot_confusion_matrix(y_true, y_pred, fold):
     plt.close(fig)  # Close the figure to avoid blocking
 
     print(f"Confusion matrix for Fold {fold} (Validation) saved as 'confusion_matrix_fold{fold}.png'")
+    return cm
+    """
+
+    cm = confusion_matrix(y_true, y_pred)
+    print(f"\n     Confusion Matrix - Fold {fold}  - Epoch {epoch+1} (Validation):")
+     # print the confusion matrix with 5 spaces indentation
+    indent = " " * 5  
+    for row in cm:
+        print(f"{indent}{row}")
+    print("\n")
     return cm
 
 def train(args):
@@ -213,9 +224,9 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         #print("Labels: ", label_tot)
 
         # Calculate precision, recall, and F1-score
-        precision = precision_score(all_targets, all_preds, average='weighted')
-        recall = recall_score(all_targets, all_preds, average='weighted')
-        f1 = f1_score(all_targets, all_preds, average='weighted')
+        precision = precision_score(all_targets, all_preds, average='weighted', zero_division=0)
+        recall = recall_score(all_targets, all_preds, average='weighted', zero_division=0)
+        f1 = f1_score(all_targets, all_preds, average='weighted', zero_division=0)
 
         # Update learning rate
         scheduler.step()
@@ -224,7 +235,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc, precision, recall, f1])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | "
               f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
-              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f} | "
+              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, "
               f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
         
         # Save best model checkpoint
@@ -233,7 +244,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
 
         # Plot Validation Confusion matrix
-        plot_confusion_matrix(all_targets, all_preds, fold)
+        plot_confusion_matrix(all_targets, all_preds, fold, epoch)
 
     return logs
 
@@ -280,7 +291,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', type=str, default='best_model')
     parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
-    parser.add_argument('--is_kfold', action='store_true', help='Use K-Fold cross-validation')
+    parser.add_argument('--is_kfold', action='store_true', default=True, help='Use K-Fold cross-validation')
     parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
     args = parser.parse_args()
 
