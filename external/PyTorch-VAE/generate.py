@@ -16,6 +16,14 @@ def generate_images(checkpoint_path, data_dir, output_folder, latent_dim=128, de
     else:
         state_dict = checkpoint
 
+    # Rimuovi il prefisso "model." dalle chiavi
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        if key.startswith("model."):
+            new_state_dict[key[6:]] = value  # Rimuove "model."
+        else:
+            new_state_dict[key] = value
+
     # Carica il modello VAE
     model = VanillaVAE(in_channels=1, latent_dim=latent_dim)  # Modifica in_channels se necessario
     model.load_state_dict(state_dict)
