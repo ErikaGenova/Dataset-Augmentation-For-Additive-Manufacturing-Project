@@ -147,9 +147,11 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     return gradient_penalty
 
 def read_image(opt):
-    x = img.imread('%s/%s' % (opt.input_dir,opt.input_name))
-    x = np2torch(x,opt)
-    x = x[:,0:3,:,:]
+    x = img.imread('%s/%s' % (opt.input_dir, opt.input_name))
+    if x.ndim == 2:
+        x = x[:, :, None]  # Se è in bianco e nero, aggiungi il canale colore
+    x = np2torch(x, opt)
+    x = x[:, 0:3, :, :]
     return x
 
 def read_image_dir(dir,opt):
