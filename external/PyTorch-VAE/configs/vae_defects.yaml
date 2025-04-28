@@ -16,7 +16,8 @@ data_params:
   num_workers:      2
 
 exp_params:
-  LR:           5e-3
+    #LR:           5e-3
+  LR:           0.005
   weight_decay: 0.0
   kld_weight:   2.5e-4
   manual_seed:  42

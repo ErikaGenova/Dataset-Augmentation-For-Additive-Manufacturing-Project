@@ -45,13 +45,15 @@ experiment = VAEXperiment(model,
 
 data_path = '/content/mla_project/images'  #change this to your dataset path in colab if needed
 
+has_gpu = torch.cuda.is_available() and torch.cuda.device_count() > 0
 data = VAEDataset(
     data_path=data_path,
     train_batch_size=16,
     val_batch_size=16,
     patch_size=(128, 128),
     num_workers=4,
-    pin_memory=len(config['trainer_params']['gpus']) != 0
+    # pin_memory=len(config['trainer_params']['gpus']) != 0
+    pin_memory=has_gpu
 )
 
 
@@ -65,7 +67,10 @@ runner = Trainer(logger=tb_logger,
                                      save_last= True),
                  ],
                 #  strategy=DDPPlugin(find_unused_parameters=False),
-                strategy={"type": "ddp", "find_unused_parameters": False},
+                # strategy={"type": "ddp", "find_unused_parameters": False},
+                strategy="ddp",                # just the name
+                # accelerator="gpu",
+                # devices=torch.cuda.device_count(),
                  **config['trainer_params'])
 
 
