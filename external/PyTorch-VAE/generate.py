@@ -7,9 +7,18 @@ from dataset import DefectsDataset  # Importa il tuo dataset personalizzato
 from models import VanillaVAE  # Importa il modello VAE
 
 def generate_images(checkpoint_path, data_dir, output_folder, latent_dim=128, device='cuda'):
+    # Carica il checkpoint
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    
+    # Estrai il state_dict se il checkpoint è complesso (ad esempio, salvato con PyTorch Lightning)
+    if "state_dict" in checkpoint:
+        state_dict = checkpoint["state_dict"]
+    else:
+        state_dict = checkpoint
+
     # Carica il modello VAE
     model = VanillaVAE(in_channels=1, latent_dim=latent_dim)  # Modifica in_channels se necessario
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.load_state_dict(state_dict)
     model.to(device)
     model.eval()
 
