@@ -165,9 +165,15 @@ def np2torch(x,opt):
         x = x[:,:,:,None]
         x = x.transpose((3, 2, 0, 1))/255
     else:
-        x = color.rgb2gray(x)
+        if x.ndim == 3 and x.shape[2] == 3:
+            # Se ha 3 canali, converti in grayscale
+            x = color.rgb2gray(x)
+        elif x.ndim == 3 and x.shape[2] == 1:
+            # Se ha già 1 canale, toglilo semplicemente
+            x = x[:, :, 0]
         x = x[:,:,None,None]
         x = x.transpose(3, 2, 0, 1)
+        x = x/255
     x = torch.from_numpy(x)
     if not(opt.not_cuda):
         x = move_to_gpu(x)
@@ -279,7 +285,6 @@ def generate_dir2save(opt):
         dir2save = '%s/Paint2image/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
         if opt.quantization_flag:
             dir2save = '%s_quantized' % dir2save
-    print('dir2save: %s' % dir2save)
     return dir2save
 
 def post_config(opt):
