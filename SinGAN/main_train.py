@@ -11,6 +11,8 @@ if __name__ == '__main__':
     parser.add_argument('--mode', help='task to be done', default='train')
     opt = parser.parse_args()
     opt.nc_im = 1
+    # num of channels of noise grayscale image
+    opt.nc_z = 1
     opt = functions.post_config(opt)
     Gs = []
     Zs = []
