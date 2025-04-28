@@ -17,8 +17,14 @@ from sklearn.cluster import KMeans
 
 # custom weights initialization called on netG and netD
 
+"""
+    The read_image(opt) function reads an image from disk and converts it into a format suitable for processing in a PyTorch mode
+"""
 def read_image(opt):
+    # Read the image from the specified input directory and name
     x = img.imread('%s%s' % (opt.input_img,opt.ref_image))
+
+    # If the image is grayscale (2D), add a channel dimension
     return np2torch(x)
 
 def denorm(x):
@@ -53,7 +59,7 @@ def convert_image_np(inp):
     inp = np.clip(inp,0,1)
     return inp
 
-def save_image(real_cpu,receptive_feild,ncs,epoch_num,file_name):
+def save_image(real_cpu, receptive_feild, ncs, epoch_num, file_name):
     fig,ax = plt.subplots(1)
     if ncs==1:
         ax.imshow(real_cpu.view(real_cpu.size(2),real_cpu.size(3)),cmap='gray')
@@ -74,7 +80,7 @@ def convert_image_np_2d(inp):
     # inp = std*
     return inp
 
-def generate_noise(size,num_samp=1,device='cuda',type='gaussian', scale=1):
+def generate_noise(size, num_samp=1, device='cuda', type='gaussian', scale=1):
     if type == 'gaussian':
         noise = torch.randn(num_samp, size[0], round(size[1]/scale), round(size[2]/scale), device=device)
         noise = upsampling(noise,size[1], size[2])
@@ -86,7 +92,7 @@ def generate_noise(size,num_samp=1,device='cuda',type='gaussian', scale=1):
         noise = torch.randn(num_samp, size[0], size[1], size[2], device=device)
     return noise
 
-def plot_learning_curves(G_loss,D_loss,epochs,label1,label2,name):
+def plot_learning_curves(G_loss, D_loss, epochs, label1, label2, name):
     fig,ax = plt.subplots(1)
     n = np.arange(0,epochs)
     plt.plot(n,G_loss,n,D_loss)
@@ -106,7 +112,7 @@ def plot_learning_curve(loss,epochs,name):
     plt.savefig('%s.png' % name)
     plt.close(fig)
 
-def upsampling(im,sx,sy):
+def upsampling(im, sx, sy):
     m = nn.Upsample(size=[round(sx),round(sy)],mode='bilinear',align_corners=True)
     return m(im)
 
@@ -160,7 +166,7 @@ def read_image_dir(dir,opt):
     x = x[:,0:3,:,:]
     return x
 
-def np2torch(x,opt):
+def np2torch(x, opt):
     if opt.nc_im == 3:
         x = x[:,:,:,None]
         x = x.transpose((3, 2, 0, 1))/255
@@ -261,49 +267,78 @@ def generate_in2coarsest(reals,scale_v,scale_h,opt):
         in_s = upsampling(real_down, real_down.shape[2], real_down.shape[3])
     return in_s
 
+"""
+    The generate_dir2save(opt) function creates a directory path (as a string) where the trained models, results, 
+    or outputs will be saved based on the mode specified in the opt object.
+    The function uses different patterns to generate paths depending on what task or operation you're performing.
+"""
 def generate_dir2save(opt):
     dir2save = None
+
+    # Training Modes
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
         dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'animation_train') :
         dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
     elif (opt.mode == 'paint_train') :
         dir2save = 'TrainedModels/%s/scale_factor=%f_paint/start_scale=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.paint_start_scale)
+    
+    # Random Samples Modes
     elif opt.mode == 'random_samples':
         dir2save = '%s/RandomSamples/%s/gen_start_scale=%d' % (opt.out,opt.input_name[:-4], opt.gen_start_scale)
     elif opt.mode == 'random_samples_arbitrary_sizes':
         dir2save = '%s/RandomSamples_ArbitrerySizes/%s/scale_v=%f_scale_h=%f' % (opt.out,opt.input_name[:-4], opt.scale_v, opt.scale_h)
+    
+    # Animation Modes
     elif opt.mode == 'animation':
         dir2save = '%s/Animation/%s' % (opt.out, opt.input_name[:-4])
+    
+    # Super-Resolution  Mode
     elif opt.mode == 'SR':
         dir2save = '%s/SR/%s' % (opt.out, opt.sr_factor)
+    
+    # Harmonization Mode
     elif opt.mode == 'harmonization':
         dir2save = '%s/Harmonization/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
+    
+    # Editing Mode
     elif opt.mode == 'editing':
         dir2save = '%s/Editing/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
+    
+    # Paint-to-Image Mode
     elif opt.mode == 'paint2image':
         dir2save = '%s/Paint2image/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
         if opt.quantization_flag:
             dir2save = '%s_quantized' % dir2save
     return dir2save
 
+"""
+    This function prepares and adjusts some settings before starting the training of SinGAN
+"""
 def post_config(opt):
     # init fixed parameters
+
+    # Set the device (CPU or GPU). If the option opt.not_cuda is True, it forces the use of the CPU.
     opt.device = torch.device("cpu" if opt.not_cuda else "cuda:0")
-    opt.niter_init = opt.niter
-    opt.noise_amp_init = opt.noise_amp
-    opt.nfc_init = opt.nfc
-    opt.min_nfc_init = opt.min_nfc
-    opt.scale_factor_init = opt.scale_factor
+    opt.niter_init = opt.niter # number of epochs (iterations) to train each scale of SinGAN
+    opt.noise_amp_init = opt.noise_amp # amplitude (strength) of the noise added to the image during training
+    opt.nfc_init = opt.nfc # number of filters in the first layer of the generator and discriminator
+    opt.min_nfc_init = opt.min_nfc # minimum number of filters in the first layer of the generator and discriminator
+    opt.scale_factor_init = opt.scale_factor # scale factor for the image pyramid
+
+    # Builds a path to save the trained model
     opt.out_ = 'TrainedModels/%s/scale_factor=%f/' % (opt.input_name[:-4], opt.scale_factor)
     if opt.mode == 'SR':
         opt.alpha = 100
 
+    # seed is used to ensure the reproducibility of the results
     if opt.manualSeed is None:
         opt.manualSeed = random.randint(1, 10000)
+
     print("Random Seed: ", opt.manualSeed)
     random.seed(opt.manualSeed)
     torch.manual_seed(opt.manualSeed)
+
     if torch.cuda.is_available() and opt.not_cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
     return opt
