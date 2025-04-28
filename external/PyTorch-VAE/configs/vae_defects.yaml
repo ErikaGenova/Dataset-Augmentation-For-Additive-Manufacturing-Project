@@ -29,7 +29,7 @@ exp_params:
 trainer_params:
   accelerator: gpu      # instead of gpus
   devices: 1            # number of GPUs
-  max_epochs: 50
+  max_epochs: 200
 
 logging_params:
   save_dir: "/content/vae_logs/"
