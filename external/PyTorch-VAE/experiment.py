@@ -31,28 +31,28 @@ class VAEXperiment(pl.LightningModule):
     def forward(self, input: Tensor, **kwargs) -> Tensor:
         return self.model(input, **kwargs)
 
-    def training_step(self, batch, batch_idx, optimizer_idx = 0):
+    def training_step(self, batch, batch_idx):
         real_img, labels = batch
         self.curr_device = real_img.device
 
         results = self.forward(real_img, labels = labels)
         train_loss = self.model.loss_function(*results,
                                               M_N = self.params['kld_weight'], #al_img.shape[0]/ self.num_train_imgs,
-                                              optimizer_idx=optimizer_idx,
+                                              #optimizer_idx=optimizer_idx,
                                               batch_idx = batch_idx)
 
         self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True)
 
         return train_loss['loss']
 
-    def validation_step(self, batch, batch_idx, optimizer_idx = 0):
+    def validation_step(self, batch, batch_idx):
         real_img, labels = batch
         self.curr_device = real_img.device
 
         results = self.forward(real_img, labels = labels)
         val_loss = self.model.loss_function(*results,
                                             M_N = 1.0, #real_img.shape[0]/ self.num_val_imgs,
-                                            optimizer_idx = optimizer_idx,
+                                            #optimizer_idx = optimizer_idx,
                                             batch_idx = batch_idx)
 
         self.log_dict({f"val_{key}": val.item() for key, val in val_loss.items()}, sync_dist=True)
@@ -121,6 +121,6 @@ class VAEXperiment(pl.LightningModule):
                         scheds.append(scheduler2)
                 except:
                     pass
-                return optims, scheds
+                return optimizer, scheduler # just return the optimizer and scheduler (not a list)
         except:
             return optims

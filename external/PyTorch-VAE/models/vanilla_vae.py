@@ -32,6 +32,14 @@ class VanillaVAE(BaseVAE):
             )
             in_channels = h_dim
 
+        modules.append(
+            nn.Sequential(
+                nn.Conv2d(in_channels, out_channels=in_channels,
+                        kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(in_channels),
+                nn.LeakyReLU())
+        )
+
         self.encoder = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1]*4, latent_dim)
         self.fc_var = nn.Linear(hidden_dims[-1]*4, latent_dim)
@@ -62,17 +70,21 @@ class VanillaVAE(BaseVAE):
         self.decoder = nn.Sequential(*modules)
 
         self.final_layer = nn.Sequential(
-                            nn.ConvTranspose2d(hidden_dims[-1],
-                                               hidden_dims[-1],
-                                               kernel_size=3,
-                                               stride=2,
-                                               padding=1,
-                                               output_padding=1),
-                            nn.BatchNorm2d(hidden_dims[-1]),
-                            nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels= 3,
-                                      kernel_size= 3, padding= 1),
-                            nn.Tanh())
+            nn.ConvTranspose2d(hidden_dims[-1],
+                            hidden_dims[-1],
+                            kernel_size=3,
+                            stride=2,
+                            padding=1,
+                            output_padding=1),
+            nn.BatchNorm2d(hidden_dims[-1]),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(hidden_dims[-1], hidden_dims[-1]//2,
+                            kernel_size=3, stride=2, padding=1, output_padding=1),  # <<== add extra upsample
+            nn.BatchNorm2d(hidden_dims[-1]//2),
+            nn.LeakyReLU(),
+            nn.Conv2d(hidden_dims[-1]//2, out_channels=1,  # <<== output 1 channel
+                    kernel_size=3, padding=1),
+            nn.Tanh())
 
     def encode(self, input: Tensor) -> List[Tensor]:
         """
