@@ -218,7 +218,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             else:
                 noise = opt.noise_amp * noise_ + prev
 
-            print('noise shape:',noise.shape)
             fake = netG(noise.detach(), prev)
             output = netD(fake.detach())
             errD_fake = output.mean()
