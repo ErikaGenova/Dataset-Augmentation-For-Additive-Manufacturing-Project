@@ -43,7 +43,7 @@ experiment = VAEXperiment(model,
 
 # data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
 
-data_path = '/content/mla_project/images'  #change this to your dataset path in colab if needed
+data_path = '/content/mla_project/images/original'  #change this to your dataset path in colab if needed
 
 has_gpu = torch.cuda.is_available() and torch.cuda.device_count() > 0
 data = VAEDataset(
