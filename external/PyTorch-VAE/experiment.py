@@ -77,7 +77,8 @@ class VAEXperiment(pl.LightningModule):
                           nrow=12)
 
         try:
-            samples = self.model.sample(144,
+            num_samples = test_label.shape[0]
+            samples = self.model.sample(num_samples,
                                         self.curr_device,
                                         labels = test_label)
             vutils.save_image(samples.cpu().data,

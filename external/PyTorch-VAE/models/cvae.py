@@ -12,7 +12,7 @@ class ConditionalVAE(BaseVAE):
                  num_classes: int,
                  latent_dim: int,
                  hidden_dims: List = None,
-                 img_size:int = 64,
+                 img_size:int = 128,
                  **kwargs) -> None:
         super(ConditionalVAE, self).__init__()
 
@@ -37,6 +37,14 @@ class ConditionalVAE(BaseVAE):
                     nn.LeakyReLU())
             )
             in_channels = h_dim
+
+        modules.append(
+            nn.Sequential(
+                nn.Conv2d(in_channels, out_channels=in_channels,
+                        kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(in_channels),
+                nn.LeakyReLU())
+        )
 
         self.encoder = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1]*4, latent_dim)
@@ -117,17 +125,18 @@ class ConditionalVAE(BaseVAE):
         return eps * std + mu
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
-        y = kwargs['labels'].float()
-        embedded_class = self.embed_class(y)
+        y = kwargs['labels'].long()
+        y_one_hot = F.one_hot(y, num_classes=2).float()  # Converti in one-hot
+        embedded_class = self.embed_class(y_one_hot)
         embedded_class = embedded_class.view(-1, self.img_size, self.img_size).unsqueeze(1)
         embedded_input = self.embed_data(input)
-
+        
         x = torch.cat([embedded_input, embedded_class], dim = 1)
         mu, log_var = self.encode(x)
 
         z = self.reparameterize(mu, log_var)
 
-        z = torch.cat([z, y], dim = 1)
+        z = torch.cat([z, y_one_hot], dim = 1)
         return  [self.decode(z), input, mu, log_var]
 
     def loss_function(self,
