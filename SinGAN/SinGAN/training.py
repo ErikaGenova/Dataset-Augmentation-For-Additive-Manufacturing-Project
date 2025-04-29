@@ -83,7 +83,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     The train_single_scale function is responsible for training a GAN (Generative Adversarial Network) on a single resolution scale
     of an image, using a generator (netG) and a discriminator (netD)
 """
-def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
+def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
 
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
@@ -177,10 +177,10 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             if (Gs == []) & (opt.mode != 'SR_train'):
                 noise = noise_
             else:
-                noise = opt.noise_amp*noise_+prev
+                noise = opt.noise_amp * noise_ + prev
 
             print('noise shape:',noise.shape)
-            fake = netG(noise.detach(),prev)
+            fake = netG(noise.detach(), prev)
             output = netD(fake.detach())
             errD_fake = output.mean()
             errD_fake.backward(retain_graph=True)
@@ -309,7 +309,7 @@ def train_paint(opt,Gs,Zs,reals,NoiseAmp,centers,paint_inject_scale):
 
             D_curr,G_curr = init_models(opt)
 
-            z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals[:scale_num+1],Gs[:scale_num],Zs[:scale_num],in_s,NoiseAmp[:scale_num],opt,centers=centers)
+            z_curr,in_s,G_curr = train_single_scale(D_curr, G_curr, reals[:scale_num+1], Gs[:scale_num], Zs[:scale_num], in_s, NoiseAmp[:scale_num], opt, centers=centers)
 
             G_curr = functions.reset_grads(G_curr,False)
             G_curr.eval()
