@@ -63,20 +63,18 @@ def generate_images(checkpoint_path, config_path, data_dir, output_folder, model
                 vutils.save_image(reconstructed_img.data, output_path, normalize=True)
                 print(f"Generated image saved to {output_path}")
     elif model_name == 'cvae':
-        # Generate new samples
-        num_samples = 30  # Number of samples to generate for each class
+        num_samples = 30  # Number of samples to generate per class
         for class_label in range(model_params['num_classes']):
-            # Create a subfolder for each class
+            # Create a folder for each class
             class_folder = os.path.join(output_folder, f"class_{class_label}")
             os.makedirs(class_folder, exist_ok=True)
 
-            # Generate samples for the current class
             labels = torch.tensor([class_label] * num_samples, device=device)
             samples = model.sample(num_samples, current_device=device, labels=labels)
 
             # Save the generated samples
             for i, sample in enumerate(samples):
-                output_path = os.path.join(output_folder, f"sample_class_{class_label}_{i}.png")
+                output_path = os.path.join(class_folder, f"sample_{i}.png")
                 vutils.save_image(sample.unsqueeze(0).data, output_path, normalize=True)
                 print(f"Generated sample saved to {output_path}")
 
