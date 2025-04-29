@@ -64,8 +64,13 @@ def generate_images(checkpoint_path, config_path, data_dir, output_folder, model
                 print(f"Generated image saved to {output_path}")
     elif model_name == 'cvae':
         # Generate new samples
-        num_samples = 30  # Numero di immagini da generare
+        num_samples = 30  # Number of samples to generate for each class
         for class_label in range(model_params['num_classes']):
+            # Create a subfolder for each class
+            class_folder = os.path.join(output_folder, f"class_{class_label}")
+            os.makedirs(class_folder, exist_ok=True)
+
+            # Generate samples for the current class
             labels = torch.tensor([class_label] * num_samples, device=device)
             samples = model.sample(num_samples, current_device=device, labels=labels)
 
