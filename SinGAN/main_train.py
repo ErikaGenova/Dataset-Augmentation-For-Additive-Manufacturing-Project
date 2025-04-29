@@ -36,8 +36,10 @@ if __name__ == '__main__':
         # load the real image from the input directory
         real = functions.read_image(opt)
 
+        print('real shape before adjust_scales2image:', real.shape)
         # Prepare the dimensions and scale parameters to train SinGAN on my image
         functions.adjust_scales2image(real, opt)
+        print('real shape after adjust_scales2image:', real.shape)
         
         # Train the model
         train(opt, Gs, Zs, reals, NoiseAmp)

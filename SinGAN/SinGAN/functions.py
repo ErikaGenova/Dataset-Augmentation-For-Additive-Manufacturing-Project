@@ -24,6 +24,7 @@ def read_image(opt):
     # Read the image from the specified input directory and name
     print("Reading image from %s%s" % (opt.input_dir,opt.input_name))
     x = img.imread('%s%s' % (opt.input_dir,opt.input_name))
+    print("Image shape before np2torch: ", x.shape)
 
     # If the image is grayscale (2D), add a channel dimension
     return np2torch(x, opt)
@@ -202,6 +203,8 @@ def np2torch(x, opt):
         x = x.type(torch.FloatTensor)
 
     x = norm(x)
+
+    print("Image shape after np2torch: ", x.shape)
     return x
 
 def torch2uint8(x):

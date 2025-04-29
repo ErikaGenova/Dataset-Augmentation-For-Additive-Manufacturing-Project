@@ -96,6 +96,35 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         opt.nzx = real.shape[2]+(opt.ker_size-1)*(opt.num_layer)
         opt.nzy = real.shape[3]+(opt.ker_size-1)*(opt.num_layer)
         pad_noise = 0
+    
+    # print all values opt
+    print("========= print all values opt ===========")
+    print('opt.scale_factor:',opt.scale_factor)
+    print('opt.niter:',opt.niter)
+    print('opt.Dsteps:',opt.Dsteps)
+    print('opt.Gsteps:',opt.Gsteps)
+    print('opt.lr_d:',opt.lr_d)
+    print('opt.lr_g:',opt.lr_g)
+    print('opt.beta1:',opt.beta1)
+    print('opt.gamma:',opt.gamma)
+    print('opt.lambda_grad:',opt.lambda_grad)
+    print('opt.outf:',opt.outf)
+    print('opt.nzx:',opt.nzx)
+    print('opt.nzy:',opt.nzy)
+    print('opt.receptive_field:',opt.receptive_field)
+    print('opt.ker_size:',opt.ker_size)
+    print('opt.num_layer:',opt.num_layer)
+    print('opt.stride:',opt.stride)
+    print('opt.padd_size:',opt.padd_size)
+    print('opt.nc_z:',opt.nc_z)
+    print('opt.nc_im:',opt.nc_im)
+    print('opt.nfc:',opt.nfc)
+    print('opt.min_nfc:',opt.min_nfc)
+    print('opt.noise_amp:',opt.noise_amp)
+    print('opt.noise_amp_init:',opt.noise_amp_init)
+    print('opt.device:',opt.device)
+
+
     m_noise = nn.ZeroPad2d(int(pad_noise))
     m_image = nn.ZeroPad2d(int(pad_image))
 
@@ -124,6 +153,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             z_opt = functions.generate_noise([1,opt.nzx,opt.nzy], device=opt.device)
             z_opt = m_noise(z_opt.expand(1,opt.nc_z,opt.nzx,opt.nzy))
             noise_ = functions.generate_noise([1,opt.nzx,opt.nzy], device=opt.device)
+            print("noise_ shape:",noise_.shape)
+            print("z_opt shape:",z_opt.shape)
             noise_ = m_noise(z_opt.expand(1,opt.nc_z,opt.nzx,opt.nzy))
         else:
             noise_ = functions.generate_noise([opt.nc_z,opt.nzx,opt.nzy], device=opt.device)
