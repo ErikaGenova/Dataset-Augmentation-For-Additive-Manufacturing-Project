@@ -76,17 +76,26 @@ class ConditionalVAE(BaseVAE):
         self.decoder = nn.Sequential(*modules)
 
         self.final_layer = nn.Sequential(
-                            nn.ConvTranspose2d(hidden_dims[-1],
-                                               hidden_dims[-1],
-                                               kernel_size=3,
-                                               stride=2,
-                                               padding=1,
-                                               output_padding=1),
-                            nn.BatchNorm2d(hidden_dims[-1]),
-                            nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels= 3,
-                                      kernel_size= 3, padding= 1),
-                            nn.Tanh())
+            nn.ConvTranspose2d(hidden_dims[-1],
+                            hidden_dims[-1],
+                            kernel_size=3,
+                            stride=2,
+                            padding=1,
+                            output_padding=1),
+            nn.BatchNorm2d(hidden_dims[-1]),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(hidden_dims[-1],
+                            hidden_dims[-1] // 2,
+                            kernel_size=3,
+                            stride=2,
+                            padding=1,
+                            output_padding=1),  # Aggiungi un ulteriore upsampling
+            nn.BatchNorm2d(hidden_dims[-1] // 2),
+            nn.LeakyReLU(),
+            nn.Conv2d(hidden_dims[-1] // 2, out_channels=1,  # Assicurati che l'output abbia 1 canale (grayscale)
+                    kernel_size=3, padding=1),
+            nn.Tanh()
+        )
 
     def encode(self, input: Tensor) -> List[Tensor]:
         """
@@ -167,12 +176,13 @@ class ConditionalVAE(BaseVAE):
         :return: (Tensor)
         """
         y = kwargs['labels'].float()
+        y_one_hot = F.one_hot(y.long(), num_classes=2).float()
         z = torch.randn(num_samples,
                         self.latent_dim)
 
         z = z.to(current_device)
 
-        z = torch.cat([z, y], dim=1)
+        z = torch.cat([z, y_one_hot], dim=1)
         samples = self.decode(z)
         return samples
 
