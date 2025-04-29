@@ -21,8 +21,9 @@ from SinGAN.imresize import imresize
 def train(opt, Gs, Zs, reals, NoiseAmp):
     # Lecture and pre-processing of the input image
     real_ = functions.read_image(opt)
-    real = imresize(real_,opt.scale1,opt)
+    real = imresize(real_,opt.scale1,opt) # mi esce: torch.Size([1, 1, 200, 250])
     reals = functions.creat_reals_pyramid(real,reals,opt)
+    print('reals shape:',reals[0].shape)
 
     in_s = 0
     scale_num = 0
@@ -54,7 +55,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
             D_curr.load_state_dict(torch.load('%s/%d/netD.pth' % (opt.out_,scale_num-1)))
 
         # Train the current generator and discriminator
-        z_curr, in_s, G_curr = train_single_scale(D_curr,G_curr,reals,Gs,Zs,in_s,NoiseAmp,opt)
+        z_curr, in_s, G_curr = train_single_scale(D_curr,G_curr, reals, Gs, Zs, in_s, NoiseAmp, opt)
 
         # Disable the gradients of the current generator and discriminator
         G_curr = functions.reset_grads(G_curr,False)
@@ -87,8 +88,15 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
 
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
+
+    print('real shape in train_single_scale:', real.shape) # torch.Size([1, 1, 25, 32])
+
     opt.nzx = real.shape[2]#+(opt.ker_size-1)*(opt.num_layer)
     opt.nzy = real.shape[3]#+(opt.ker_size-1)*(opt.num_layer)
+
+    print('opt.nzx:',opt.nzx)
+    print('opt.nzy:',opt.nzy)
+
     opt.receptive_field = opt.ker_size + ((opt.ker_size-1)*(opt.num_layer-1))*opt.stride
     pad_noise = int(((opt.ker_size - 1) * opt.num_layer) / 2)
     pad_image = int(((opt.ker_size - 1) * opt.num_layer) / 2)
@@ -98,7 +106,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         pad_noise = 0
     
     # print all values opt
-    print("========= print all values opt ===========")
+    print("\n========= print all values opt ===========")
     print('opt.scale_factor:',opt.scale_factor)
     print('opt.niter:',opt.niter)
     print('opt.Dsteps:',opt.Dsteps)
@@ -123,6 +131,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     print('opt.noise_amp:',opt.noise_amp)
     print('opt.noise_amp_init:',opt.noise_amp_init)
     print('opt.device:',opt.device)
+    print("====================\n")
 
 
     m_noise = nn.ZeroPad2d(int(pad_noise))
@@ -131,7 +140,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     alpha = opt.alpha
 
     # Generate the fixed noise
-    print('opt.nc_z:',opt.nc_z)
+    
     fixed_noise = functions.generate_noise([opt.nc_z,opt.nzx,opt.nzy],device=opt.device)
     z_opt = torch.full(fixed_noise.shape, 0, device=opt.device)
     z_opt = m_noise(z_opt)
@@ -153,9 +162,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             z_opt = functions.generate_noise([1,opt.nzx,opt.nzy], device=opt.device)
             z_opt = m_noise(z_opt.expand(1,opt.nc_z,opt.nzx,opt.nzy))
             noise_ = functions.generate_noise([1,opt.nzx,opt.nzy], device=opt.device)
-            print("noise_ shape:",noise_.shape)
-            print("z_opt shape:",z_opt.shape)
-            noise_ = m_noise(z_opt.expand(1,opt.nc_z,opt.nzx,opt.nzy))
+            noise_ = m_noise(noise_.expand(1,opt.nc_z,opt.nzx,opt.nzy))
         else:
             noise_ = functions.generate_noise([opt.nc_z,opt.nzx,opt.nzy], device=opt.device)
             noise_ = m_noise(noise_)
@@ -170,6 +177,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             output = netD(real).to(opt.device)
             #D_real_map = output.detach()
             errD_real = -output.mean()#-a
+            
             errD_real.backward(retain_graph=True)
             D_x = -errD_real.item()
 
@@ -369,13 +377,13 @@ def init_models(opt):
     netG.apply(models.weights_init)
     if opt.netG != '':
         netG.load_state_dict(torch.load(opt.netG))
-    print(netG)
+    #print(netG)
 
     #discriminator initialization:
     netD = models.WDiscriminator(opt).to(opt.device)
     netD.apply(models.weights_init)
     if opt.netD != '':
         netD.load_state_dict(torch.load(opt.netD))
-    print(netD)
+    #print(netD)
 
     return netD, netG

@@ -55,7 +55,6 @@ class GeneratorConcatSkip2CleanAdd(nn.Module):
             nn.Tanh()
         )
     def forward(self,x,y):
-        print('x shape:',x.shape)
         x = self.head(x)
         x = self.body(x)
         x = self.tail(x)
