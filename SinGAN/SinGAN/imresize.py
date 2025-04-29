@@ -22,7 +22,6 @@ def move_to_gpu(t):
     return t
 
 def np2torch(x,opt):
-    print("opt.nc_im: ", opt.nc_im)
     if opt.nc_im == 3:
         if len(x.shape) == 2:
             x = color.gray2rgb(x)
