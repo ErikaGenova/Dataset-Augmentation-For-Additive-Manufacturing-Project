@@ -31,6 +31,10 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
+
+"""
+    The norm(x) function normalizes the input tensor x to a range between -1 and 1.
+"""
 def norm(x):
     out = (x -0.5) *2
     return out.clamp(-1, 1)
@@ -121,6 +125,9 @@ def reset_grads(model,require_grad):
         p.requires_grad_(require_grad)
     return model
 
+"""
+    This function moves a tensor to the GPU if available, otherwise it returns the tensor unchanged.
+"""
 def move_to_gpu(t):
     if (torch.cuda.is_available()):
         t = t.to(torch.device('cuda'))
@@ -152,6 +159,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
     return gradient_penalty
 
+"""
 def read_image(opt):
     x = img.imread('%s/%s' % (opt.input_dir, opt.input_name))
     if x.ndim == 2:
@@ -159,6 +167,7 @@ def read_image(opt):
     x = np2torch(x, opt)
     x = x[:, 0:3, :, :]
     return x
+"""
 
 def read_image_dir(dir,opt):
     x = img.imread('%s' % (dir))
@@ -166,25 +175,31 @@ def read_image_dir(dir,opt):
     x = x[:,0:3,:,:]
     return x
 
+"""
+    The np2torch(x, opt) function converts a NumPy grayscale image (x) into a PyTorch tensor, 
+    normalizing it and adapting it to the format and device (CPU or GPU) required by the model.
+"""
 def np2torch(x, opt):
-    if opt.nc_im == 3:
-        x = x[:,:,:,None]
-        x = x.transpose((3, 2, 0, 1))/255
-    else:
-        if x.ndim == 3 and x.shape[2] == 3:
-            # Se ha 3 canali, converti in grayscale
-            x = color.rgb2gray(x)
-        elif x.ndim == 3 and x.shape[2] == 1:
-            # Se ha già 1 canale, toglilo semplicemente
-            x = x[:, :, 0]
-        x = x[:,:,None,None]
-        x = x.transpose(3, 2, 0, 1)
-        x = x/255
+    # Assume always grayscale image
+    if x.ndim == 3 and x.shape[2] == 3:
+        # if x has 3 channels, convert to grayscale
+        x = color.rgb2gray(x)
+
+    # Garantee that x is [H, W, C]
+    if x.ndim == 2:
+        x = x[:, :, None]
+
+    x = x[:, :, None, None]  # -> [H, W, 1, 1]
+    x = x.transpose(3, 2, 0, 1)  # -> [1, 1, H, W]
+    x = x / 255.0
+
     x = torch.from_numpy(x)
-    if not(opt.not_cuda):
+    if not opt.not_cuda:
         x = move_to_gpu(x)
-    x = x.type(torch.cuda.FloatTensor) if not(opt.not_cuda) else x.type(torch.FloatTensor)
-    #x = x.type(torch.FloatTensor)
+        x = x.type(torch.cuda.FloatTensor)
+    else:
+        x = x.type(torch.FloatTensor)
+
     x = norm(x)
     return x
 
