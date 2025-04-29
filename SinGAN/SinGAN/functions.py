@@ -26,7 +26,7 @@ def read_image(opt):
     x = img.imread('%s%s' % (opt.input_dir,opt.input_name))
 
     # If the image is grayscale (2D), add a channel dimension
-    return np2torch(x)
+    return np2torch(x, opt)
 
 def denorm(x):
     out = (x + 1) / 2
@@ -181,17 +181,17 @@ def read_image_dir(dir,opt):
     normalizing it and adapting it to the format and device (CPU or GPU) required by the model.
 """
 def np2torch(x, opt):
-    # Assume always grayscale image
+    # Se RGB, converti in grayscale
     if x.ndim == 3 and x.shape[2] == 3:
-        # if x has 3 channels, convert to grayscale
         x = color.rgb2gray(x)
 
-    # Garantee that x is [H, W, C]
+    # Se è 2D (H, W), aggiungi un asse canale
     if x.ndim == 2:
-        x = x[:, :, None]
+        x = x[:, :, None]  # -> [H, W, 1]
 
-    x = x[:, :, None, None]  # -> [H, W, 1, 1]
-    x = x.transpose(3, 2, 0, 1)  # -> [1, 1, H, W]
+    # Ora x ha shape [H, W, 1], aggiungiamo batch e channel
+    x = x.transpose(2, 0, 1)  # -> [1, H, W]
+    x = x[None, :, :, :]      # -> [1, 1, H, W]
     x = x / 255.0
 
     x = torch.from_numpy(x)

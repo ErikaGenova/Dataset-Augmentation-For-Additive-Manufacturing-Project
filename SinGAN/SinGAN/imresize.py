@@ -24,24 +24,24 @@ def move_to_gpu(t):
 def np2torch(x,opt):
     print("opt.nc_im: ", opt.nc_im)
     if opt.nc_im == 3:
+        if len(x.shape) == 2:
+            x = color.gray2rgb(x)
         x = x[:,:,:,None]
-        x = x.transpose((3, 2, 0, 1))/255
+        x = x.transpose((3, 2, 0, 1))
+        x = (x - x.min())/(x.max() - x.min()) #added
     else:
-        if x.ndim == 3 and x.shape[2] == 3:
-            # Se ha 3 canali, converti in grayscale
+        if x.shape[-1] == 3:
             x = color.rgb2gray(x)
-        elif x.ndim == 3 and x.shape[2] == 1:
-            # Se ha già 1 canale, toglilo semplicemente
-            x = x[:, :, 0]
-        # Ora x è 2D
-        x = x[:,:,None,None]  # [H, W, 1, 1]
-        x = x.transpose(3, 2, 0, 1)  # [1, 1, H, W]
-        x = x/255
+        if len(x.shape) == 2:
+            x = x[:,:,None,None]
+        else:
+            x = x[:,:,:,None]
+        x = x.transpose(3, 2, 0, 1)
+        x = (x - x.min())/(x.max() - x.min()) #added
     x = torch.from_numpy(x)
     if not (opt.not_cuda):
         x = move_to_gpu(x)
     x = x.type(torch.cuda.FloatTensor) if not(opt.not_cuda) else x.type(torch.FloatTensor)
-    #x = x.type(torch.cuda.FloatTensor)
     x = norm(x)
     return x
 
