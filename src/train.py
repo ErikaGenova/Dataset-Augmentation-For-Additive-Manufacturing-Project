@@ -237,13 +237,16 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc, precision, recall, f1])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | "
               f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
-              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, ")
+              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, "
+              f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+        
+        """
         for i, (p, r, f) in enumerate(zip(precision_per_class, recall_per_class, f1_per_class)):
             if i == 0:
                 print(f"     Class {i} (NoDefects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (No Defects)")
             else:
                 print(f"     Class {i} (Defects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (Defects)")
-                
+        """
         # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -280,7 +283,10 @@ def train_kfold(args):
         
         # Save metrics of the last epoch for this fold
         last_epoch_metrics = logs[-1]  # Metrics of the last epoch
-        fold_metrics.append(last_epoch_metrics[2:])  # Exclude epoch number (val_loss, val_acc, precision, recall, f1)
+        fold_metrics.append(last_epoch_metrics[2:7])  # Extract exactly [val_loss, val_acc, precision, recall, f1]
+
+    # Convert fold_metrics to a NumPy array for averaging
+    fold_metrics = np.array(fold_metrics, dtype=float)
 
     # Calculate average metrics across folds
     avg_metrics = np.mean(fold_metrics, axis=0)
