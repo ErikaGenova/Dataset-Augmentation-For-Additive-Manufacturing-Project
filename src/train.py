@@ -144,6 +144,8 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
+    print(f"\n[Fold {fold}] Number of training images: {len(train_dataset)}")
+    print(f"[Fold {fold}] Number of validation images: {len(val_dataset)}")
     # Model
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
@@ -223,15 +225,22 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         recall = recall_score(all_targets, all_preds, average='weighted', zero_division=0)
         f1 = f1_score(all_targets, all_preds, average='weighted', zero_division=0)
 
+        # Calculate per class metrics
+        precision_per_class = precision_score(all_targets, all_preds, average=None, zero_division=0)
+        recall_per_class = recall_score(all_targets, all_preds, average=None, zero_division=0)
+        f1_per_class = f1_score(all_targets, all_preds, average=None, zero_division=0)
+        
         # Update learning rate
         scheduler.step()
 
-        # Log metrics
+        # Log metrics (save global metrics but print per class metrics)
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc, precision, recall, f1])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | "
               f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
-              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, "
-              f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, ")
+        for i, (p, r, f) in enumerate(zip(precision_per_class, recall_per_class, f1_per_class)):
+            print(f"     Class {i}: Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f}")
+
         
         # Save best model checkpoint
         if val_acc > best_val_acc:
@@ -279,7 +288,7 @@ def train_kfold(args):
     print(f"Average Precision: {avg_precision:.4f}")
     print(f"Average Recall: {avg_recall:.4f}")
     print(f"Average F1-Score: {avg_f1:.4f}")
-    
+
     # Save all logs to CSV
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
     df.to_csv('kfold_logs.csv', index=False)
