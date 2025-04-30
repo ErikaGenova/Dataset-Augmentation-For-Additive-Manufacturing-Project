@@ -239,9 +239,11 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
               f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
               f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, ")
         for i, (p, r, f) in enumerate(zip(precision_per_class, recall_per_class, f1_per_class)):
-            print(f"     Class {i}: Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f}")
-
-        
+            if i == 0:
+                print(f"     Class {i} (NoDefects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (No Defects)")
+            else:
+                print(f"     Class {i} (Defects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (Defects)")
+                
         # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -250,7 +252,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             torch.save(model.state_dict(), checkpoint_path)
             
         # Plot Validation Confusion matrix
-        plot_confusion_matrix(all_targets, all_preds, fold, epoch)
+        #plot_confusion_matrix(all_targets, all_preds, fold, epoch)
 
     return logs
 
