@@ -21,9 +21,11 @@ from SinGAN.imresize import imresize
 def train(opt, Gs, Zs, reals, NoiseAmp):
     # Lecture and pre-processing of the input image
     real_ = functions.read_image(opt)
+    print('real_ shape before creat_reals_pyramid and imresize:', real_.shape)
     real = imresize(real_,opt.scale1,opt) # mi esce: torch.Size([1, 1, 200, 250])
     reals = functions.creat_reals_pyramid(real,reals,opt)
-    print('reals shape:',reals[0].shape)
+    print('reals[0] shape:',reals[0].shape)
+    print("all elements of reals: ", len(reals))
 
     in_s = 0
     scale_num = 0

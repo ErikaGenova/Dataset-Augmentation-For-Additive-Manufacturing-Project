@@ -251,10 +251,17 @@ def adjust_scales2image_SR(real_,opt):
     opt.stop_scale = opt.num_scales - scale2stop
     return real
 
+"""
+    The create_reals_pyramid function builds a pyramid of images (reals) starting from the original resolution image (real).
+    It scales the image down by a factor of scale_factor for each level of the pyramid,
+    and appends the scaled images to the reals list.
+    The function returns the list of scaled images (reals).
+    The function uses the imresize function to resize the image and the opt object to determine the scaling factor and other parameters.
+"""
 def creat_reals_pyramid(real,reals,opt):
-    real = real[:,0:3,:,:]
+    real = real[:, :1, :, :]
     for i in range(0, opt.stop_scale+1, 1):
-        scale = math.pow(opt.scale_factor,opt.stop_scale-i)
+        scale = math.pow(opt.scale_factor, opt.stop_scale-i)
         curr_real = imresize(real,scale,opt)
         reals.append(curr_real)
     return reals
