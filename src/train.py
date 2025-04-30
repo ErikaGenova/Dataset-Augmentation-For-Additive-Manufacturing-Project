@@ -312,6 +312,10 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', type=str, default='resnet_checkpoints', help='Directory to save checkpoints')  # New argument
     args = parser.parse_args()
 
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     if args.is_kfold:
         print("Training with K-Fold cross-validation")
         train_kfold(args)
