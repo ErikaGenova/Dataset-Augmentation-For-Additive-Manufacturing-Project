@@ -245,8 +245,10 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
-
+            # Save the checkpoint in the specified output directory
+            checkpoint_path = os.path.join(args.output_dir, f"{args.checkpoint}_fold{fold}.pth")
+            torch.save(model.state_dict(), checkpoint_path)
+            
         # Plot Validation Confusion matrix
         plot_confusion_matrix(all_targets, all_preds, fold, epoch)
 
@@ -307,6 +309,7 @@ if __name__ == '__main__':
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     parser.add_argument('--is_kfold', action='store_true', default=True, help='Use K-Fold cross-validation')
     parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
+    parser.add_argument('--output-dir', type=str, default='resnet_checkpoints', help='Directory to save checkpoints')  # New argument
     args = parser.parse_args()
 
     if args.is_kfold:
