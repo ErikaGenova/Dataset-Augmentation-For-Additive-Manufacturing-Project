@@ -148,12 +148,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
 
-    # Freeze all layers except the last fully connected layer to avoid overfitting
-    """
-    for name, param in model.named_parameters():
-        if not name.startswith('fc'):
-            param.requires_grad = False
-    """
+    # Freeze all layers except the last fully connected layer and layer4 to avoid overfitting
     for name, param in model.named_parameters():
         if "layer4" in name or "fc" in name:
             param.requires_grad = True
@@ -257,7 +252,7 @@ def train_kfold(args):
     labels = np.array(labels)
     kf = StratifiedKFold(n_splits=args.k_folds, shuffle=True, random_state=42)
 
-    all_logs, fold_accuracies = [], []
+    all_logs, fold_metrics = [], []
 
     # Compute class weights
     class_weights = get_class_weights(labels)
@@ -269,12 +264,22 @@ def train_kfold(args):
         print(f"\n===== Fold {fold} =====")
         logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug)
         all_logs += [[fold] + row for row in logs]
-        fold_accuracies.append(max([log[4] for log in logs]))  # Collect best accuracy for each fold
+        
+        # Save metrics of the last epoch for this fold
+        last_epoch_metrics = logs[-1]  # Metrics of the last epoch
+        fold_metrics.append(last_epoch_metrics[2:])  # Exclude epoch number (val_loss, val_acc, precision, recall, f1)
 
-    # Calculate average accuracy across folds
-    avg_accuracy = sum(fold_accuracies) / len(fold_accuracies)
-    print(f"\nAverage Training Accuracy across {args.k_folds} folds: {avg_accuracy:.4f}")
+    # Calculate average metrics across folds
+    avg_metrics = np.mean(fold_metrics, axis=0)
+    avg_val_loss, avg_val_acc, avg_precision, avg_recall, avg_f1 = avg_metrics
 
+    print(f"\n===== Overall Metrics Across {args.k_folds} Folds =====")
+    print(f"Average Validation Loss: {avg_val_loss:.4f}")
+    print(f"Average Validation Accuracy: {avg_val_acc:.4f}")
+    print(f"Average Precision: {avg_precision:.4f}")
+    print(f"Average Recall: {avg_recall:.4f}")
+    print(f"Average F1-Score: {avg_f1:.4f}")
+    
     # Save all logs to CSV
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
     df.to_csv('kfold_logs.csv', index=False)

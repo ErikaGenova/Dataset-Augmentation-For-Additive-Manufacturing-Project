@@ -143,13 +143,13 @@ class VAEDataset(LightningDataModule):
             transforms.RandomHorizontalFlip(),
             transforms.Resize(self.patch_size),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5830], std=[0.2075])  # your computed mean and std
+            transforms.Normalize(mean=[0.5839], std=[0.2074])  # your computed mean and std
         ])
 
         val_transforms = transforms.Compose([
             transforms.Resize(self.patch_size),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5830], std=[0.2075])
+            transforms.Normalize(mean=[0.5839], std=[0.2074])
         ])
 
         self.train_dataset = DefectsDataset(
