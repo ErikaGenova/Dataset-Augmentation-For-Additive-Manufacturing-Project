@@ -29,6 +29,9 @@ def read_image(opt):
     # If the image is grayscale (2D), add a channel dimension
     return np2torch(x, opt)
 
+"""
+    The denorm(x) function denormalizes the input tensor x to a range between 0 and 1.
+"""
 def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
@@ -50,6 +53,11 @@ def norm(x):
 #    out = (I1-I2.mean())*2
 #    return out#.clamp(I2.min(), I2.max())
 
+"""
+    The convert_image_np(inp) function converts a PyTorch tensor to a NumPy array,
+    denormalizing it and adjusting the shape for visualization.
+    It handles both RGB and grayscale images, ensuring the output is in the correct format for display.
+"""
 def convert_image_np(inp):
     if inp.shape[1]==3:
         inp = denorm(inp)
@@ -57,10 +65,9 @@ def convert_image_np(inp):
         inp = inp.numpy().transpose((1,2,0))
     else:
         inp = denorm(inp)
-        inp = move_to_cpu(inp[-1,-1,:,:])
-        inp = inp.numpy().transpose((0,1))
-        # mean = np.array([x/255.0 for x in [125.3,123.0,113.9]])
-        # std = np.array([x/255.0 for x in [63.0,62.1,66.7]])
+        inp = move_to_cpu(inp[0, 0, :, :])  # Prendi direttamente il primo (e unico) canale
+        inp = inp.numpy()  # Convertilo in un array NumPy
+        inp = np.transpose(inp, (0, 1))  # Lascia la forma (h, w) per grayscale
 
     inp = np.clip(inp,0,1)
     return inp

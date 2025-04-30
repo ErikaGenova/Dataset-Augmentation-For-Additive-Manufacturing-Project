@@ -23,9 +23,10 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = functions.read_image(opt)
     print('real_ shape before creat_reals_pyramid and imresize:', real_.shape)
     real = imresize(real_,opt.scale1,opt) # mi esce: torch.Size([1, 1, 200, 250])
-    reals = functions.creat_reals_pyramid(real,reals,opt)
+    reals = functions.creat_reals_pyramid(real_,reals,opt)
     print('reals[0] shape:',reals[0].shape)
     print("all elements of reals: ", len(reals))
+    print("shape last element of reals: ", reals[-1].shape)
 
     in_s = 0
     scale_num = 0
@@ -47,7 +48,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         #plt.imsave('%s/in.png' %  (opt.out_), functions.convert_image_np(real), vmin=0, vmax=1)
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
-        plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
+        plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1, cmap='gray')
 
         # Inizialize the generator and discriminator
         D_curr,G_curr = init_models(opt)
@@ -268,8 +269,14 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         if epoch % 25 == 0 or epoch == (opt.niter-1):
             print('scale %d:[%d/%d]' % (len(Gs), epoch, opt.niter))
 
+        """
+            This part of the code is responsible for saving the generated images and the current state of the model at regular intervals.
+            Save the generated images and the current state of the model at regular intervals (every 500 epochs or at the last epoch).
+            The generated images include the fake image, the generated image from the optimized noise, and the discriminator maps for real and fake images.
+            The optimized noise is saved as a .pth file for later use.
+        """
         if epoch % 500 == 0 or epoch == (opt.niter-1):
-            plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1)
+            plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1)
             #plt.imsave('%s/D_fake.png'   % (opt.outf), functions.convert_image_np(D_fake_map))
             #plt.imsave('%s/D_real.png'   % (opt.outf), functions.convert_image_np(D_real_map))
