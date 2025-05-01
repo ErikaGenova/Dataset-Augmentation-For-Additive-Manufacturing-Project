@@ -89,11 +89,11 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 """
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
     # Set the parameters for the training process
-    opt.lr_d = 0.00001  # Riduci il tasso di apprendimento del discriminatore
+    opt.lr_d = 0.0001  # Riduci il tasso di apprendimento del discriminatore
     opt.lr_g = 0.0001  # Aumenta il tasso di apprendimento del generatore
 
     # Set the number of iterations and steps for the generator and discriminator
-    opt.Gsteps = 7  # Aumenta il numero di passi del generatore
+    opt.Gsteps = 5  # Aumenta il numero di passi del generatore
     opt.Dsteps = 1  # Riduci il numero di passi del discriminatore
 
     # Image preprocessing and network configuration
