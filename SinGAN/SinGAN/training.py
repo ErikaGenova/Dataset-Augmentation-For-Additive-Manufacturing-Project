@@ -89,11 +89,11 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 """
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
     # Set the parameters for the training process
-    opt.lr_d = 0.0003  # Riduci il tasso di apprendimento del discriminatore
+    opt.lr_d = 0.0001  # Riduci il tasso di apprendimento del discriminatore
     opt.lr_g = 0.0007  # Aumenta il tasso di apprendimento del generatore
 
     # Set the number of iterations and steps for the generator and discriminator
-    opt.Gsteps = 4  # Aumenta il numero di passi del generatore
+    opt.Gsteps = 5  # Aumenta il numero di passi del generatore
     opt.Dsteps = 2  # Riduci il numero di passi del discriminatore
 
     # Image preprocessing and network configuration
@@ -198,7 +198,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = torch.full([1,opt.nc_z,opt.nzx,opt.nzy], 0, device=opt.device)
                     z_prev = m_noise(z_prev)
-                    opt.noise_amp = 0.3 # reduce noise amplitude to 0.5
+                    opt.noise_amp = 0.1 # reduce noise amplitude to 0.5
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
@@ -248,8 +248,11 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         for j in range(opt.Gsteps):
             netG.zero_grad()
             output = netD(fake)
-            #D_fake_map = output.detach()
-            errG = -output.mean()
+            
+            # Add a gradient penalty to the generator loss
+            loss_reconstruction = nn.MSELoss()(fake, real)
+            errG = -output.mean() + 0.1 * loss_reconstruction  # Aggiungi un termine di ricostruzione
+            
             errG1=errG.detach().requires_grad_(True)
             errG1.backward(retain_graph=True)
             if alpha!=0:
