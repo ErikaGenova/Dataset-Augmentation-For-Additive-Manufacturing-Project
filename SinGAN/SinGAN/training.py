@@ -89,12 +89,12 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 """
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
     # Set the parameters for the training process
-    opt.lr_d = 0.00001  # Riduci il tasso di apprendimento del discriminatore
-    opt.lr_g = 0.0001  # Aumenta il tasso di apprendimento del generatore
+    opt.lr_d = 0.00005  # Riduci il tasso di apprendimento del discriminatore
+    opt.lr_g = 0.0015  # Aumenta il tasso di apprendimento del generatore
 
     # Set the number of iterations and steps for the generator and discriminator
-    opt.Gsteps = 10  # Aumenta il numero di passi del generatore
-    opt.Dsteps = 3  # Riduci il numero di passi del discriminatore
+    opt.Gsteps = 6  # Aumenta il numero di passi del generatore
+    opt.Dsteps = 1  # Riduci il numero di passi del discriminatore
 
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
@@ -198,7 +198,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = torch.full([1,opt.nc_z,opt.nzx,opt.nzy], 0, device=opt.device)
                     z_prev = m_noise(z_prev)
-                    opt.noise_amp = 0.1 # reduce noise amplitude to 0.5
+                    opt.noise_amp = 0.05 # reduce noise amplitude to 0.5
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
