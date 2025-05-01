@@ -230,7 +230,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             gradient_penalty = functions.calc_gradient_penalty(netD, real, fake, opt.lambda_grad, opt.device)
             gradient_penalty.backward()
 
-            errD = errD_real + errD_fake + gradient_penalty
+            errD = errD_real+errD_fake+gradient_penalty
             optimizerD.step()
 
         errD2plot.append(errD.detach())
@@ -267,7 +267,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         z_opt2plot.append(rec_loss)
 
         if epoch % 25 == 0 or epoch == (opt.niter-1):
-            print('scale %d:[%d/%d]' % (len(Gs), epoch, opt.niter))
+            print(f'scale {len(Gs)}:[{epoch}/{opt.niter}] - errD: {errD.item():.4f}, errG: {errG.item():.4f}')
 
         """
             This part of the code is responsible for saving the generated images and the current state of the model at regular intervals.
@@ -276,15 +276,13 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             The optimized noise is saved as a .pth file for later use.
         """
         if epoch % 500 == 0 or epoch == (opt.niter-1):
+            print('errG:', errG.item())
+            
             plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
-            plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1)
-            #plt.imsave('%s/D_fake.png'   % (opt.outf), functions.convert_image_np(D_fake_map))
-            #plt.imsave('%s/D_real.png'   % (opt.outf), functions.convert_image_np(D_real_map))
-            #plt.imsave('%s/z_opt.png'    % (opt.outf), functions.convert_image_np(z_opt.detach()), vmin=0, vmax=1)
-            #plt.imsave('%s/prev.png'     %  (opt.outf), functions.convert_image_np(prev), vmin=0, vmax=1)
-            #plt.imsave('%s/noise.png'    %  (opt.outf), functions.convert_image_np(noise), vmin=0, vmax=1)
-            #plt.imsave('%s/z_prev.png'   % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1)
-
+            plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1, cmap='gray')
+            plt.imsave('%s/prev.png' % (opt.outf), functions.convert_image_np(prev), vmin=0, vmax=1, cmap='gray')
+            plt.imsave('%s/noise.png' % (opt.outf), functions.convert_image_np(noise), vmin=0, vmax=1, cmap='gray')
+            plt.imsave('%s/z_prev.png' % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1, cmap='gray')
 
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
 
