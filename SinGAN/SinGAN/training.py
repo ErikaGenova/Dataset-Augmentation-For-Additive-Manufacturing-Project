@@ -97,7 +97,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     opt.Dsteps = 2  # Riduci il numero di passi del discriminatore
 
     # Set lambda for the gradient penalty
-    opt.lambda_grad = 1  # Peso della penalità R1
+    opt.lambda_grad = 0.1  # Peso della penalità R1
 
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
