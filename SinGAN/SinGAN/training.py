@@ -225,7 +225,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             if (Gs == []) & (opt.mode != 'SR_train'):
                 noise = noise_
             else:
-                noise = opt.noise_amp * noise_ + prev
+                noise = opt.noise_amp * noise_ / noise_.std() + prev / prev.std()
 
             fake = netG(noise.detach(), prev)
             output = netD(fake.detach())
