@@ -88,6 +88,13 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     of an image, using a generator (netG) and a discriminator (netD)
 """
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
+    # Set the parameters for the training process
+    opt.lr_d = 0.0003  # Riduci il tasso di apprendimento del discriminatore
+    opt.lr_g = 0.0007  # Aumenta il tasso di apprendimento del generatore
+
+    # Set the number of iterations and steps for the generator and discriminator
+    opt.Gsteps = 4  # Aumenta il numero di passi del generatore
+    opt.Dsteps = 2  # Riduci il numero di passi del discriminatore
 
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
@@ -192,7 +199,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = torch.full([1,opt.nc_z,opt.nzx,opt.nzy], 0, device=opt.device)
                     z_prev = m_noise(z_prev)
-                    opt.noise_amp = 0.5 # reduce noise amplitude to 0.5
+                    opt.noise_amp = 0.3 # reduce noise amplitude to 0.5
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
@@ -274,10 +281,15 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             Save the generated images and the current state of the model at regular intervals (every 500 epochs or at the last epoch).
             The generated images include the fake image, the generated image from the optimized noise, and the discriminator maps for real and fake images.
             The optimized noise is saved as a .pth file for later use.
+
+            The images saved are:
+                - fake_sample.png: the generated image from the generator using the optimized noise.
+                - G(z_opt).png: the generated image from the generator using the optimized noise and the previous image.
+                - prev.png: the previous image used as input to the generator.
+                - noise.png: the noise image used as input to the generator.
+                - z_prev.png: the previous noise image used as input to the generator.
         """
         if epoch % 500 == 0 or epoch == (opt.niter-1):
-            print('errG:', errG.item())
-            
             plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/prev.png' % (opt.outf), functions.convert_image_np(prev), vmin=0, vmax=1, cmap='gray')
