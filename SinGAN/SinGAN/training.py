@@ -96,9 +96,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     opt.Gsteps = 4  # Aumenta il numero di passi del generatore
     opt.Dsteps = 2  # Riduci il numero di passi del discriminatore
 
-    # Set lambda for the gradient penalty
-    opt.lambda_grad = 0.1  # Peso della penalità R1
-
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
 
@@ -187,18 +184,10 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # train with real
             netD.zero_grad()
 
-            real.requires_grad_(True) 
             output = netD(real).to(opt.device)
-            gradients = torch.autograd.grad(
-                outputs=output.sum(), inputs=real,
-                create_graph=True, retain_graph=True, only_inputs=True
-            )[0]
-            grad_penalty = (opt.lambda_grad / 2) * (gradients.view(gradients.size(0), -1).norm(2, dim=1) ** 2).mean()
-
-            # Perdita sui dati reali con penalità R1
-            errD_real = -output.mean() + grad_penalty
-            
+            errD_real = -output.mean()
             errD_real.backward(retain_graph=True)
+
             D_x = -errD_real.item()
 
             # train with fake
