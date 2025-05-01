@@ -187,6 +187,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # train with real
             netD.zero_grad()
 
+            real.requires_grad_(True) 
             output = netD(real).to(opt.device)
             gradients = torch.autograd.grad(
                 outputs=output.sum(), inputs=real,
