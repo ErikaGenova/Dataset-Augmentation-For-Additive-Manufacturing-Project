@@ -251,8 +251,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             netG.zero_grad()
             output = netD(fake)
             
-            loss_reconstruction = nn.MSELoss()(fake, real)
-            errG = -output.mean() + 0.1 * loss_reconstruction  # Aggiungi un termine di ricostruzione 
+            errG = -output.mean()
             errG1=errG.detach().requires_grad_(True)
             errG1.backward(retain_graph=True)
 
