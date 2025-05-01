@@ -249,9 +249,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             netG.zero_grad()
             output = netD(fake)
             
-            loss_reconstruction = nn.MSELoss()(fake, real)
-            loss_regularization = nn.MSELoss()(fake, prev)  # Regolarizzazione rispetto alla scala precedente
-            errG = -output.mean() + 0.1 * loss_reconstruction + 0.05 * loss_regularization
+            errG = -output.mean() 
             errG1=errG.detach().requires_grad_(True)
             errG1.backward(retain_graph=True)
 
