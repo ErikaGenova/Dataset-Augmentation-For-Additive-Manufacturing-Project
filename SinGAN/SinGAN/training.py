@@ -96,6 +96,9 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     opt.Gsteps = 4  # Aumenta il numero di passi del generatore
     opt.Dsteps = 2  # Riduci il numero di passi del discriminatore
 
+    # Set lambda for the gradient penalty
+    opt.lambda_grad = 10  # Peso della penalità R1
+
     # Image preprocessing and network configuration
     real = reals[len(Gs)]
 
@@ -185,8 +188,14 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             netD.zero_grad()
 
             output = netD(real).to(opt.device)
-            #D_real_map = output.detach()
-            errD_real = -output.mean()#-a
+            gradients = torch.autograd.grad(
+                outputs=output.sum(), inputs=real,
+                create_graph=True, retain_graph=True, only_inputs=True
+            )[0]
+            grad_penalty = (opt.lambda_grad / 2) * (gradients.view(gradients.size(0), -1).norm(2, dim=1) ** 2).mean()
+
+            # Perdita sui dati reali con penalità R1
+            errD_real = -output.mean() + grad_penalty
             
             errD_real.backward(retain_graph=True)
             D_x = -errD_real.item()
@@ -274,7 +283,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         z_opt2plot.append(rec_loss)
 
         if epoch % 25 == 0 or epoch == (opt.niter-1):
-            print(f'scale {len(Gs)}:[{epoch}/{opt.niter}] - errD: {errD.item():.4f}, errG: {errG.item():.4f}')
+            print(f'scale {len(Gs)}:[{epoch}/{opt.niter}] - errD: {errD.item():.4f}, errG: {errG.item():.4f} - Gradient penalty (R1): {grad_penalty.item():.4f}')
 
         """
             This part of the code is responsible for saving the generated images and the current state of the model at regular intervals.
