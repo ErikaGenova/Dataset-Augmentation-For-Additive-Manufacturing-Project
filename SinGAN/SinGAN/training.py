@@ -90,7 +90,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
     # Set the parameters for the training process
     opt.lr_d = 0.0001  # Riduci il tasso di apprendimento del discriminatore
-    opt.lr_g = 0.0007  # Aumenta il tasso di apprendimento del generatore
+    opt.lr_g = 0.001  # Aumenta il tasso di apprendimento del generatore
 
     # Set the number of iterations and steps for the generator and discriminator
     opt.Gsteps = 5  # Aumenta il numero di passi del generatore
@@ -249,12 +249,10 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             netG.zero_grad()
             output = netD(fake)
             
-            # Add a gradient penalty to the generator loss
-            loss_reconstruction = nn.MSELoss()(fake, real)
-            errG = -output.mean() + 0.1 * loss_reconstruction  # Aggiungi un termine di ricostruzione
-            
+            errG = -output.mean()
             errG1=errG.detach().requires_grad_(True)
             errG1.backward(retain_graph=True)
+
             if alpha!=0:
                 loss = nn.MSELoss()
                 if opt.mode == 'paint_train':
