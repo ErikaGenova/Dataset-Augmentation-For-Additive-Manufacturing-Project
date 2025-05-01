@@ -89,11 +89,11 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 """
 def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
     # Set the parameters for the training process
-    opt.lr_d = 0.00005  # Riduci il tasso di apprendimento del discriminatore
+    opt.lr_d = 0.000001  # Riduci il tasso di apprendimento del discriminatore
     opt.lr_g = 0.0015  # Aumenta il tasso di apprendimento del generatore
 
     # Set the number of iterations and steps for the generator and discriminator
-    opt.Gsteps = 8  # Aumenta il numero di passi del generatore
+    opt.Gsteps = 10  # Aumenta il numero di passi del generatore
     opt.Dsteps = 1  # Riduci il numero di passi del discriminatore
 
     # Image preprocessing and network configuration
@@ -158,8 +158,10 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     # setup optimizer
     optimizerD = optim.Adam(netD.parameters(), lr=opt.lr_d, betas=(opt.beta1, 0.999))
     optimizerG = optim.Adam(netG.parameters(), lr=opt.lr_g, betas=(opt.beta1, 0.999))
-    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[1600],gamma=opt.gamma)
-    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[1600],gamma=opt.gamma)
+
+    # setup learning rate scheduler
+    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[500],gamma=opt.gamma)
+    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[500],gamma=opt.gamma)
 
     errD2plot = []
     errG2plot = []
