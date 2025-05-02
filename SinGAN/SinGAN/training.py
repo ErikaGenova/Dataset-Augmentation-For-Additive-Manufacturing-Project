@@ -122,7 +122,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                     prev = m_image(prev)
                     z_prev = torch.full([1,opt.nc_z,opt.nzx,opt.nzy], 0, device=opt.device)
                     z_prev = m_noise(z_prev)
-                    opt.noise_amp = 0.05
+                    opt.noise_amp = 1
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
