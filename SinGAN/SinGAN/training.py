@@ -183,7 +183,8 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             netG.zero_grad()
             output = netD(fake)
             
-            errG = -output.mean()
+            loss_reconstruction = nn.MSELoss()(fake, real)
+            errG = -output.mean() + 0.1 * loss_reconstruction
             errG1=errG.detach().requires_grad_(True)
             errG1.backward(retain_graph=True)
 
@@ -223,7 +224,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                 - noise.png: the noise image used as input to the generator.
                 - z_prev.png: the previous noise image used as input to the generator.
         """
-        if epoch % 500 == 0 or epoch == (opt.niter-1):
+        if epoch % 250 == 0 or epoch == (opt.niter-1):
             plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1, cmap='gray')
 
