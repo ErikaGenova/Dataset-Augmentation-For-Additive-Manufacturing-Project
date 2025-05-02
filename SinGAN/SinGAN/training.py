@@ -8,34 +8,15 @@ import math
 import matplotlib.pyplot as plt
 from SinGAN.imresize import imresize
 
-"""
-    Train a set of generators and discriminators (Gs and Ds, although only Gs is saved here) at different scales (resolutions) 
-    of the input image.
-    The function returns after training a multi-scale generative model that can generate variations of the input image at different resolutions. 
-    The following are saved:
-        - Gs: list of trained generators
-        - Zs: list of input noises for each scale.
-        - reals: pyramid of real images.
-        - NoiseAmp: amplitudes of noise for each scale.
-"""
-def train(opt, Gs, Zs, reals, NoiseAmp):
-    # Lecture and pre-processing of the input image
+def train(opt,Gs,Zs,reals,NoiseAmp):
     real_ = functions.read_image(opt)
-    print('real_ shape before creat_reals_pyramid and imresize:', real_.shape)
-    real = imresize(real_,opt.scale1,opt) # mi esce: torch.Size([1, 1, 200, 250])
-    reals = functions.creat_reals_pyramid(real_,reals,opt)
-    print('reals[0] shape:',reals[0].shape)
-    print("all elements of reals: ", len(reals))
-    print("shape last element of reals: ", reals[-1].shape)
-
     in_s = 0
     scale_num = 0
+    real = imresize(real_,opt.scale1,opt)
+    reals = functions.creat_reals_pyramid(real,reals,opt)
     nfc_prev = 0
 
-    # Cycle over the different scales
-    while scale_num < opt.stop_scale + 1:
-
-        # Update the parameters of the model
+    while scale_num<opt.stop_scale+1:
         opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), 128)
         opt.min_nfc = min(opt.min_nfc_init * pow(2, math.floor(scale_num / 4)), 128)
 
@@ -48,30 +29,24 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         #plt.imsave('%s/in.png' %  (opt.out_), functions.convert_image_np(real), vmin=0, vmax=1)
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
-        plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1, cmap='gray')
+        plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
 
-        # Inizialize the generator and discriminator
         D_curr,G_curr = init_models(opt)
-
         if (nfc_prev==opt.nfc):
             G_curr.load_state_dict(torch.load('%s/%d/netG.pth' % (opt.out_,scale_num-1)))
             D_curr.load_state_dict(torch.load('%s/%d/netD.pth' % (opt.out_,scale_num-1)))
 
-        # Train the current generator and discriminator
-        z_curr, in_s, G_curr = train_single_scale(D_curr,G_curr, reals, Gs, Zs, in_s, NoiseAmp, opt)
+        z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals,Gs,Zs,in_s,NoiseAmp,opt)
 
-        # Disable the gradients of the current generator and discriminator
         G_curr = functions.reset_grads(G_curr,False)
         G_curr.eval()
         D_curr = functions.reset_grads(D_curr,False)
         D_curr.eval()
 
-        # Add the current generator and discriminator to the list of generators and discriminators
         Gs.append(G_curr)
         Zs.append(z_curr)
         NoiseAmp.append(opt.noise_amp)
 
-        # Save the current generator and discriminator
         torch.save(Zs, '%s/Zs.pth' % (opt.out_))
         torch.save(Gs, '%s/Gs.pth' % (opt.out_))
         torch.save(reals, '%s/reals.pth' % (opt.out_))
@@ -83,74 +58,21 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     return
 
 
-"""
-    The train_single_scale function is responsible for training a GAN (Generative Adversarial Network) on a single resolution scale
-    of an image, using a generator (netG) and a discriminator (netD)
-"""
-def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=None):
-    # Set the parameters for the training process
-    opt.lr_d = 0.000001  # Riduci il tasso di apprendimento del discriminatore
-    opt.lr_g = 0.002  # Aumenta il tasso di apprendimento del generatore
 
-    # Set the number of iterations and steps for the generator and discriminator
-    opt.Gsteps = 10  # Aumenta il numero di passi del generatore
-    opt.Dsteps = 1  # Riduci il numero di passi del discriminatore
+def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
 
-    # Image preprocessing and network configuration
     real = reals[len(Gs)]
-
-    print('real shape in train_single_scale:', real.shape) # torch.Size([1, 1, 25, 32])
-
     opt.nzx = real.shape[2]#+(opt.ker_size-1)*(opt.num_layer)
     opt.nzy = real.shape[3]#+(opt.ker_size-1)*(opt.num_layer)
-
-    print('opt.nzx:',opt.nzx)
-    print('opt.nzy:',opt.nzy)
-
     opt.receptive_field = opt.ker_size + ((opt.ker_size-1)*(opt.num_layer-1))*opt.stride
     pad_noise = int(((opt.ker_size - 1) * opt.num_layer) / 2)
     pad_image = int(((opt.ker_size - 1) * opt.num_layer) / 2)
-    if opt.mode == 'animation_train':
-        opt.nzx = real.shape[2]+(opt.ker_size-1)*(opt.num_layer)
-        opt.nzy = real.shape[3]+(opt.ker_size-1)*(opt.num_layer)
-        pad_noise = 0
-    
-    # print all values opt
-    print("\n========= print all values opt ===========")
-    print('opt.scale_factor:',opt.scale_factor)
-    print('opt.niter:',opt.niter)
-    print('opt.Dsteps:',opt.Dsteps)
-    print('opt.Gsteps:',opt.Gsteps)
-    print('opt.lr_d:',opt.lr_d)
-    print('opt.lr_g:',opt.lr_g)
-    print('opt.beta1:',opt.beta1)
-    print('opt.gamma:',opt.gamma)
-    print('opt.lambda_grad:',opt.lambda_grad)
-    print('opt.outf:',opt.outf)
-    print('opt.nzx:',opt.nzx)
-    print('opt.nzy:',opt.nzy)
-    print('opt.receptive_field:',opt.receptive_field)
-    print('opt.ker_size:',opt.ker_size)
-    print('opt.num_layer:',opt.num_layer)
-    print('opt.stride:',opt.stride)
-    print('opt.padd_size:',opt.padd_size)
-    print('opt.nc_z:',opt.nc_z)
-    print('opt.nc_im:',opt.nc_im)
-    print('opt.nfc:',opt.nfc)
-    print('opt.min_nfc:',opt.min_nfc)
-    print('opt.noise_amp:',opt.noise_amp)
-    print('opt.noise_amp_init:',opt.noise_amp_init)
-    print('opt.device:',opt.device)
-    print("====================\n")
-
 
     m_noise = nn.ZeroPad2d(int(pad_noise))
     m_image = nn.ZeroPad2d(int(pad_image))
 
     alpha = opt.alpha
 
-    # Generate the fixed noise
-    
     fixed_noise = functions.generate_noise([opt.nc_z,opt.nzx,opt.nzy],device=opt.device)
     z_opt = torch.full(fixed_noise.shape, 0, device=opt.device)
     z_opt = m_noise(z_opt)
@@ -158,10 +80,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     # setup optimizer
     optimizerD = optim.Adam(netD.parameters(), lr=opt.lr_d, betas=(opt.beta1, 0.999))
     optimizerG = optim.Adam(netG.parameters(), lr=opt.lr_g, betas=(opt.beta1, 0.999))
-
-    # setup learning rate scheduler
-    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[500],gamma=opt.gamma)
-    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[500],gamma=opt.gamma)
+    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[1600],gamma=opt.gamma)
+    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[1600],gamma=opt.gamma)
 
     errD2plot = []
     errG2plot = []
@@ -200,7 +120,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = torch.full([1,opt.nc_z,opt.nzx,opt.nzy], 0, device=opt.device)
                     z_prev = m_noise(z_prev)
-                    opt.noise_amp = 0.005 # reduce noise amplitude to 0.5
+                    opt.noise_amp = 1 
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
@@ -294,9 +214,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         if epoch % 500 == 0 or epoch == (opt.niter-1):
             plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1, cmap='gray')
-            plt.imsave('%s/prev.png' % (opt.outf), functions.convert_image_np(prev), vmin=0, vmax=1, cmap='gray')
-            plt.imsave('%s/noise.png' % (opt.outf), functions.convert_image_np(noise), vmin=0, vmax=1, cmap='gray')
-            plt.imsave('%s/z_prev.png' % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1, cmap='gray')
 
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
 
@@ -304,7 +221,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         schedulerG.step()
 
     functions.save_networks(netG,netD,z_opt,opt)
-    return z_opt,in_s,netG    
+    return z_opt,in_s,netG     
 
 def draw_concat(Gs,Zs,reals,NoiseAmp,in_s,mode,m_noise,m_image,opt):
     G_z = in_s
@@ -369,7 +286,7 @@ def train_paint(opt,Gs,Zs,reals,NoiseAmp,centers,paint_inject_scale):
 
             D_curr,G_curr = init_models(opt)
 
-            z_curr,in_s,G_curr = train_single_scale(D_curr, G_curr, reals[:scale_num+1], Gs[:scale_num], Zs[:scale_num], in_s, NoiseAmp[:scale_num], opt, centers=centers)
+            z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals[:scale_num+1],Gs[:scale_num],Zs[:scale_num],in_s,NoiseAmp[:scale_num],opt,centers=centers)
 
             G_curr = functions.reset_grads(G_curr,False)
             G_curr.eval()

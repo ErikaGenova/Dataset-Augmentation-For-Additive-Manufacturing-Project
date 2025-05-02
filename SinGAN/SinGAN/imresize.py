@@ -21,26 +21,24 @@ def move_to_gpu(t):
         t = t.to(torch.device('cuda'))
     return t
 
-def np2torch(x,opt):
-    if opt.nc_im == 3:
-        if len(x.shape) == 2:
-            x = color.gray2rgb(x)
-        x = x[:,:,:,None]
-        x = x.transpose((3, 2, 0, 1))
-        x = (x - x.min())/(x.max() - x.min()) #added
-    else:
-        if x.shape[-1] == 3:
-            x = color.rgb2gray(x)
-        if len(x.shape) == 2:
-            x = x[:,:,None,None]
-        else:
-            x = x[:,:,:,None]
-        x = x.transpose(3, 2, 0, 1)
-        x = (x - x.min())/(x.max() - x.min()) #added
+def np2torch(x, opt):
+    if x.ndim == 3 and x.shape[2] == 3:  # Se RGB, converti in scala di grigi
+        x = color.rgb2gray(x)
+
+    if x.ndim == 2:  # Se è 2D (H, W), aggiungi un asse canale
+        x = x[:, :, None]  # -> [H, W, 1]
+
+    x = x.transpose(2, 0, 1)  # -> [C, H, W]
+    x = x[None, :, :, :]      # -> [1, C, H, W]
+    x = x / 255.0
+
     x = torch.from_numpy(x)
-    if not (opt.not_cuda):
+    if not opt.not_cuda:
         x = move_to_gpu(x)
-    x = x.type(torch.cuda.FloatTensor) if not(opt.not_cuda) else x.type(torch.FloatTensor)
+        x = x.type(torch.cuda.FloatTensor)
+    else:
+        x = x.type(torch.FloatTensor)
+
     x = norm(x)
     return x
 
