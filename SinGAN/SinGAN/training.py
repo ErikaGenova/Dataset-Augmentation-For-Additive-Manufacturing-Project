@@ -108,9 +108,19 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             # train with real
             netD.zero_grad()
 
+            real.requires_grad_(True)  # Abilita il calcolo del gradiente rispetto a `real`
             output = netD(real).to(opt.device)
             errD_real = -output.mean()
-            errD_real.backward(retain_graph=True)
+
+            # Calcola la R1 penalty
+            gradients = torch.autograd.grad(
+                outputs=output.sum(), inputs=real, create_graph=True, retain_graph=True, only_inputs=True
+            )[0]
+            grad_penalty = (gradients.view(gradients.size(0), -1).norm(2, dim=1) ** 2).mean()
+            r1_penalty = 0.5 * opt.lambda_r1 * grad_penalty  # `opt.lambda_r1` è il peso della penalità
+
+            # Aggiungi la R1 penalty alla perdita del discriminatore
+            (errD_real + r1_penalty).backward(retain_graph=True)
 
             D_x = -errD_real.item()
 

@@ -39,6 +39,9 @@ def get_arguments():
     parser.add_argument('--Dsteps',type=int, help='Discriminator inner steps',default=3)
     parser.add_argument('--lambda_grad',type=float, help='gradient penelty weight',default=0.1)
     parser.add_argument('--alpha',type=float, help='reconstruction loss weight',default=10)
+    # gamma, weight fot the R1 penalty
+    parser.add_argument('--lambda_r1',type=float, help='R1 penalty weight',default=10)
+
 
     
     return parser
