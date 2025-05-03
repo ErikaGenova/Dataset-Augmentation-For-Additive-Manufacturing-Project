@@ -20,10 +20,10 @@ from SinGAN.imresize import imresize
 def train(opt, Gs, Zs, reals, NoiseAmp):
     # Read the real image and create a pyramid of images at different scales
     real_ = functions.read_image(opt)
-    
+
     # Resize the image to a maximum size of 512x512 pixels
-    real = imresize(real_, min(256 / real_.shape[2], 256 / real_.shape[3]), opt=opt)
-    print('Image size: %d x %d' % (real.shape[2], real.shape[3]))
+    real_ = imresize(real_, min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
+    print('Image size: %d x %d' % (real_.shape[2], real_.shape[3]))
 
     # Resize the image to the specified scale1
     real = imresize(real_, opt.scale1, opt)
@@ -38,8 +38,11 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
     print('Number of scales: %d' % (len(reals)-1))
 
+    print('stop_scale: %d' % (opt.stop_scale))
     # Loop through the scales and train the model at each scale
     while scale_num < opt.stop_scale+1:
+        print(f'Image size at scale {scale_num}: {reals[scale_num].shape[2]}x{reals[scale_num].shape[3]}' )
+
         # Complexity of the model is increased at each scale, higher scales have more filters and more layers
         
         # The number of filters is increased by a factor of 2 for every 4 scales
@@ -96,6 +99,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         # Delete the current generator and discriminator to free up memory
         del D_curr, G_curr
+        torch.cuda.empty_cache()
     return
 
 
@@ -137,11 +141,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     # Create zero padding layers for the noise and image 
     m_noise = nn.ZeroPad2d(int(pad_noise)) 
     m_image = nn.ZeroPad2d(int(pad_image))
-
-    # Print the m_noise and m_image layers for debugging purposes
-    print('m_noise:',m_noise)
-    print('m_image:',m_image)
-
+ 
     alpha = opt.alpha
 
     # Generate of the fixed noise, it is used to generate like base to generate synthetic images during the training
