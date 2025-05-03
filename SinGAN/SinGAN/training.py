@@ -22,7 +22,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = functions.read_image(opt)
     
     # Resize the image to a maximum size of 512x512 pixels
-    real = imresize(real_, scale_factor=min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
+    real = imresize(real_, min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
     print('Image size: %d x %d' % (real.shape[2], real.shape[3]))
 
     # Resize the image to the specified scale1
