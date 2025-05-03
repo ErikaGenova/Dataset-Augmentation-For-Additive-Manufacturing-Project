@@ -22,8 +22,8 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = functions.read_image(opt)
     
     # Resize the image to a maximum size of 512x512 pixels
-    real = imresize(real_, scale_factor=min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
-    print('Image size: %d x %d' % (real.shape[2], real.shape[3]))
+    #real = imresize(real_, scale_factor=min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
+    #print('Image size: %d x %d' % (real.shape[2], real.shape[3]))
 
     # Resize the image to the specified scale1
     real = imresize(real_, opt.scale1, opt)
@@ -354,7 +354,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         D_fake2plot.append(D_G_z)
         z_opt2plot.append(rec_loss)
 
-        if epoch % 25 == 0 or epoch == (opt.niter-1):
+        if epoch % 10 == 0 or epoch == (opt.niter-1):
             print(f'scale {len(Gs)}:[{epoch}/{opt.niter}] - errD: {errD.item():.4f}, errG: {errG.item():.4f}')
 
         """
