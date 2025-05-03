@@ -1,30 +1,27 @@
+import os
+from PIL import Image
+import torch
+import matplotlib.pyplot as plt
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel
 from controlnet_aux import CannyDetector
-import torch
-from PIL import Image
-import os
-import matplotlib.pyplot as plt
 
-# === Percorsi ===
-img_path = "/content/mla_project/images/original/Defects/Image0.jpg"
-output_dir = "/content/mla_project/images/diffusionmodels/ControlNet"
-os.makedirs(output_dir, exist_ok=True)
+# === CONFIG ===
+input_root = "/content/mla_project/images/original"
+output_root = "/content/mla_project/images/diffusion/ControlNet"
+categories = {
+    "Defects": 3,
+    "NoDefects": 2
+}
+guidance_scale = 3.5
+strength = 0.3
+num_inference_steps = 30
 
-# === 1. Carica immagine e adatta dimensioni ===
-init_image = Image.open(img_path).convert("RGB")
-w, h = init_image.size
-w, h = (w // 64) * 64, (h // 64) * 64
-init_image = init_image.resize((w, h))
+prompt_dict = {
+    "Defects": "top-down grayscale photograph of a metal powder bed used in additive manufacturing, with dark circular defects and irregular surface marks, realistic technical style",
+    "NoDefects": "top-down grayscale photograph of a smooth, undisturbed metal powder bed surface, flat and uniform, without marks or defects, realistic technical documentation style"
+}
 
-# === 2. Estrai Canny edge map ===
-canny = CannyDetector()
-control_image = canny(init_image)
-
-# Salva la Canny map per verifica
-canny_path = os.path.join(output_dir, "Image0_canny.png")
-control_image.save(canny_path)
-
-# === 3. Carica ControlNet + Stable Diffusion pipeline ===
+# === Carica pipeline una sola volta
 controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16
 )
@@ -36,30 +33,48 @@ pipe = StableDiffusionControlNetPipeline.from_pretrained(
     torch_dtype=torch.float16
 ).to("cuda")
 
-# === 4. Prompt e generazione ===
-output = pipe(
-    prompt = "industrial powder bed surface with fine powder, grayscale, realistic, photo, technical image",
-    image = control_image,
-    num_inference_steps = 30,
-    guidance_scale = 3.5,
-    strength = 0.3
-).images[0]
+# === Detector per edge
+canny = CannyDetector()
 
-# === 5. Salva immagine generata ===
-out_path = os.path.join(output_dir, "Image0_aug1.png")
-output.save(out_path)
+# === Generazione
+for category, max_images in categories.items():
+    input_dir = os.path.join(input_root, category)
+    output_dir = os.path.join(output_root, category)
+    os.makedirs(output_dir, exist_ok=True)
 
-# === 6. Visualizza tutto insieme ===
-fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-axs[0].imshow(init_image)
-axs[0].set_title("Originale")
-axs[1].imshow(control_image, cmap="gray")
-axs[1].set_title("Mappa Canny")
-axs[2].imshow(output)
-axs[2].set_title("Generato (ControlNet)")
-for ax in axs:
-    ax.axis("off")
-plt.tight_layout()
-plt.show()
+    images_done = 0
+    for filename in sorted(os.listdir(input_dir)):
+        if not filename.lower().endswith((".png", ".jpg", ".jpeg")):
+            continue
 
-print(f"✅ Output salvati in:\n - {out_path}\n - {canny_path}")
+        img_path = os.path.join(input_dir, filename)
+        try:
+            init_image = Image.open(img_path).convert("RGB")
+        except:
+            print(f"❌ Errore nel caricamento: {filename}")
+            continue
+
+        w, h = init_image.size
+        init_image = init_image.resize(((w // 64) * 64, (h // 64) * 64))
+
+        control_image = canny(init_image)
+
+        result = pipe(
+            prompt=prompt_dict[category],
+            image=control_image,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            strength=strength
+        ).images[0]
+
+        base_name = os.path.splitext(filename)[0]
+        out_path = os.path.join(output_dir, f"{base_name}_aug1.png")
+        canny_path = os.path.join(output_dir, f"{base_name}_canny.png")
+
+        result.save(out_path)
+        control_image.save(canny_path)
+
+        print(f"✅ Generato: {out_path}")
+        images_done += 1
+        if images_done >= max_images:
+            break
