@@ -93,9 +93,17 @@ def convert_image_np_2d(inp):
     # inp = std*
     return inp
 
+"""
+    The generate_noise(size, num_samp=1, device='cuda', type='gaussian', scale=1) function generates noise tensors of a specified size and type.
+    It can create Gaussian noise, Gaussian mixture noise, or uniform noise.
+    The function also allows for upsampling the noise to a larger size.
+    The generated noise can be used for various purposes, such as initializing weights in neural networks or augmenting data.
+"""
 def generate_noise(size, num_samp=1, device='cuda', type='gaussian', scale=1):
     if type == 'gaussian':
+        # generate noise with standard deviation 1 and mean 0
         noise = torch.randn(num_samp, size[0], round(size[1]/scale), round(size[2]/scale), device=device)
+        # perform upsampling to the original size
         noise = upsampling(noise,size[1], size[2])
     if type =='gaussian_mixture':
         noise1 = torch.randn(num_samp, size[0], size[1], size[2], device=device)+5
