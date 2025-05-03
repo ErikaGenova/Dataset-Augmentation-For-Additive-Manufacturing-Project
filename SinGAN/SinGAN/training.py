@@ -21,11 +21,12 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     # Read the real image and create a pyramid of images at different scales
     real_ = functions.read_image(opt)
     
-    # Resize the image to the specified scale1
-    #real = imresize(real_, opt.scale1, opt)
+    # Resize the image to a maximum size of 512x512 pixels
     real = imresize(real_, scale_factor=min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
     print('Image size: %d x %d' % (real.shape[2], real.shape[3]))
 
+    # Resize the image to the specified scale1
+    real = imresize(real_, opt.scale1, opt)
     # Create a pyramid of images at different scales
     reals = functions.creat_reals_pyramid(real,reals,opt)
     
