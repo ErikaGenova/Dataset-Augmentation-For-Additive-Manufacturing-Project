@@ -7,6 +7,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch
+import numpy as np
 
 # Transforms for training and validation WITH and WITHOUT augmentations
 data_transforms = {
@@ -98,7 +99,7 @@ def get_defect_dataset(data_dir):
     for ext in ('png', 'jpg', 'jpeg'):
         files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
         file_paths += files
-        labels += 1 * len(files)
+    labels = np.ones(len(file_paths))
     return file_paths, labels
 
 def get_no_defect_dataset(data_dir):
@@ -107,7 +108,7 @@ def get_no_defect_dataset(data_dir):
     for ext in ('png', 'jpg', 'jpeg'):
         files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
         file_paths += files
-        labels += 0 * len(files)
+    labels = np.zeros(len(file_paths))
     return file_paths, labels
 
 def compute_mean_std(data_dir, batch_size=32, num_workers=4):
