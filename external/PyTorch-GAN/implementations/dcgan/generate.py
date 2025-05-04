@@ -7,7 +7,7 @@ import argparse
 
 # Load the generator model
 def load_generator(model_path, latent_dim, img_size, channels):
-    generator = Generator()
+    generator = Generator(img_size, latent_dim, channels)
     generator.load_state_dict(torch.load(model_path))
     generator.eval()  # Set the model to evaluation mode
     return generator

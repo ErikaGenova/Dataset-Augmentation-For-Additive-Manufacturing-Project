@@ -19,11 +19,10 @@ from data_loader import get_all_data, get_defect_dataset, get_no_defect_dataset
 from data_loader import DefectDataset
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, img_size, latent_dim, channels):
         super(Generator, self).__init__()
-
-        self.init_size = opt.img_size // 4
-        self.l1 = nn.Sequential(nn.Linear(opt.latent_dim, 128 * self.init_size ** 2))
+        self.init_size = img_size // 4
+        self.l1 = nn.Sequential(nn.Linear(latent_dim, 128 * self.init_size ** 2))
 
         self.conv_blocks = nn.Sequential(
             nn.BatchNorm2d(128),
@@ -35,7 +34,7 @@ class Generator(nn.Module):
             nn.Conv2d(128, 64, 3, stride=1, padding=1),
             nn.BatchNorm2d(64, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(64, opt.channels, 3, stride=1, padding=1),
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
             nn.Tanh(),
         )
 
@@ -47,7 +46,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, img_size, channels):
         super(Discriminator, self).__init__()
 
         def discriminator_block(in_filters, out_filters, bn=True):
@@ -57,25 +56,20 @@ class Discriminator(nn.Module):
             return block
 
         self.model = nn.Sequential(
-            *discriminator_block(opt.channels, 16, bn=False),
+            *discriminator_block(channels, 16, bn=False),
             *discriminator_block(16, 32),
             *discriminator_block(32, 64),
             *discriminator_block(64, 128),
         )
 
         # The height and width of downsampled image
-        self.ds_size = opt.img_size // 2 ** 4
-        #print(f"Downsampled size (ds_size): {self.ds_size}")  # Debug
+        self.ds_size = img_size // 2 ** 4
         self.adv_layer = nn.Sequential(nn.Linear(128 * self.ds_size ** 2, 1), nn.Sigmoid())
-        #print(f"Linear layer weights shape: {self.adv_layer[0].weight.shape}")  # Debug
-        
+
     def forward(self, img):
         out = self.model(img)
-        #print(f"Shape after convolutional layers: {out.shape}")  # Debug
         out = out.view(out.shape[0], -1)
-        #print(f"Shape after flattening: {out.shape}")  # Debug
         validity = self.adv_layer(out)
-
         return validity
 
 def main():
@@ -112,8 +106,8 @@ def main():
     adversarial_loss = torch.nn.BCELoss()
 
     # Initialize generator and discriminator
-    generator = Generator()
-    discriminator = Discriminator()
+    generator = Generator(opt.img_size, opt.latent_dim, opt.channels)
+    discriminator = Discriminator(opt.img_size, opt.channels)
 
     if cuda:
         generator.cuda()
