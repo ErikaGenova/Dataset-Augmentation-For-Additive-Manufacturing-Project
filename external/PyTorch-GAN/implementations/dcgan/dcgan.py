@@ -95,9 +95,9 @@ class Discriminator(nn.Module):
         )
 
         # The height and width of downsampled image
-        ds_size = opt.img_size // 2 ** 4
+        self.ds_size = opt.img_size // 2 ** 4
         print(f"Downsampled size (ds_size): {self.ds_size}")  # Debug
-        self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 1), nn.Sigmoid())
+        self.adv_layer = nn.Sequential(nn.Linear(128 * self.ds_size ** 2, 1), nn.Sigmoid())
         print(f"Linear layer weights shape: {self.adv_layer[0].weight.shape}")  # Debug
         
     def forward(self, img):
