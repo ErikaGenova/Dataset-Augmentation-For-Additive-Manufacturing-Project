@@ -148,6 +148,9 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
+# Directory to save models
+os.makedirs("saved_models", exist_ok=True)
+
 # ----------
 #  Training
 # ----------
@@ -204,3 +207,9 @@ for epoch in range(opt.n_epochs):
         batches_done = epoch * len(dataloader) + i
         if batches_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
+
+    # Save the models every 100 epochs
+    if epoch % 100 == 0:
+        torch.save(generator.state_dict(), f"saved_models/generator_epoch_{epoch}.pth")
+        torch.save(discriminator.state_dict(), f"saved_models/discriminator_epoch_{epoch}.pth")
+        print(f"Models saved for epoch {epoch}")
