@@ -60,4 +60,6 @@ class GeneratorConcatSkip2CleanAdd(nn.Module):
         x = self.tail(x)
         ind = int((y.shape[2]-x.shape[2])/2)
         y = y[:,:,ind:(y.shape[2]-ind),ind:(y.shape[3]-ind)]
+
+        # sum the result of the convolutional network (x) with the image y (which is the one enlarged from the previous scale)
         return x+y

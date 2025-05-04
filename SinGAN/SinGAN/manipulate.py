@@ -86,7 +86,25 @@ def generate_gif(Gs,Zs,reals,NoiseAmp,opt,alpha=0.1,beta=0.9,start_scale=2,fps=1
     imageio.mimsave('%s/start_scale=%d/alpha=%f_beta=%f.gif' % (dir2save,start_scale,alpha,beta),images_cur,fps=fps)
     del images_cur
 
-def SinGAN_generate(Gs,Zs,reals,NoiseAmp,opt,in_s=None,scale_v=1,scale_h=1,n=0,gen_start_scale=0,num_samples=50):
+"""
+    SinGAN_generate function generates images using the trained SinGAN model.
+    Prameters:
+        - Gs: List of generator networks for each scale
+        - Zs: List of noise tensors for each scale
+        - reals: List of real images for each scale
+        - NoiseAmp: List of noise amplitudes for each scale
+        - opt: Options containing various parameters for the generation process
+        - in_s: Input image to be used for generation (default is None, which means a zero tensor will be used)
+        - scale_v: Vertical scaling factor (default is 1)
+        - scale_h: Horizontal scaling factor (default is 1)
+        - n: Current scale index (default is 0)
+        - gen_start_scale: Starting scale for generation (default is 0)
+        - num_samples: Number of samples to generate at each scale (default is 50)
+    Returns:
+        - I_curr: Generated image at the last scale
+    
+"""
+def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=1, n=0, gen_start_scale=0, num_samples=50):
     #if torch.is_tensor(in_s) == False:
     if in_s is None:
         in_s = torch.full(reals[0].shape, 0, device=opt.device)
@@ -103,7 +121,7 @@ def SinGAN_generate(Gs,Zs,reals,NoiseAmp,opt,in_s=None,scale_v=1,scale_h=1,n=0,g
         for i in range(0,num_samples,1):
             if n == 0:
                 z_curr = functions.generate_noise([1,nzx,nzy], device=opt.device)
-                z_curr = z_curr.expand(1,3,z_curr.shape[2],z_curr.shape[3])
+                z_curr = z_curr.expand(1,opt.nc_z,z_curr.shape[2],z_curr.shape[3])
                 z_curr = m(z_curr)
             else:
                 z_curr = functions.generate_noise([opt.nc_z,nzx,nzy], device=opt.device)
