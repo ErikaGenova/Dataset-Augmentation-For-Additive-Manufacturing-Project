@@ -208,8 +208,8 @@ for epoch in range(opt.n_epochs):
         if batches_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
 
-    # Save the models every 100 epochs
-    if epoch % 100 == 0:
+    # Save the models every 50 epochs
+    if epoch % 50 == 0 or epoch == opt.n_epochs - 1:
         torch.save(generator.state_dict(), f"saved_models/generator_epoch_{epoch}.pth")
         torch.save(discriminator.state_dict(), f"saved_models/discriminator_epoch_{epoch}.pth")
         print(f"Models saved for epoch {epoch}")
