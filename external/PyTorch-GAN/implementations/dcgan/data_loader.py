@@ -93,18 +93,22 @@ def get_all_data(data_dir):
     return file_paths, labels
 
 def get_defect_dataset(data_dir):
+    file_paths, labels = [], []
     # return filepaths and labels equal to 1
-     for ext in ('png', 'jpg', 'jpeg'):
+    for ext in ('png', 'jpg', 'jpeg'):
         files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
         file_paths += files
         labels += 1 * len(files)
+    return file_paths, labels
 
 def get_no_defect_dataset(data_dir):
+    file_paths, labels = [], []
     # return filepaths and labels equal to 0
     for ext in ('png', 'jpg', 'jpeg'):
         files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
         file_paths += files
         labels += 0 * len(files)
+    return file_paths, labels
 
 def compute_mean_std(data_dir, batch_size=32, num_workers=4):
     '''Compute mean and std of the entire dataset for grayscale images.'''
