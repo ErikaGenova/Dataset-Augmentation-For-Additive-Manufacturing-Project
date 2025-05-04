@@ -22,8 +22,8 @@ def generate_images(generator, latent_dim, num_images, output_dir="generated_ima
         save_image(img, f"{output_dir}/image_{i}.png", normalize=True)
     print(f"Generated {num_images} images in {output_dir}")
 
-# Example usage
-if __name__ == "__main__":
+# Main function
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", type=str, required=True, help="Path to the saved generator model")
     parser.add_argument("--latent_dim", type=int, default=128, help="Dimensionality of the latent space")
@@ -38,3 +38,6 @@ if __name__ == "__main__":
 
     # Generate images
     generate_images(generator, args.latent_dim, args.num_images, args.output_dir)
+
+if __name__ == "__main__":
+    main()
