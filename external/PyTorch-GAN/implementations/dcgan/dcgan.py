@@ -96,11 +96,15 @@ class Discriminator(nn.Module):
 
         # The height and width of downsampled image
         ds_size = opt.img_size // 2 ** 4
+        print(f"Downsampled size (ds_size): {self.ds_size}")  # Debug
         self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 1), nn.Sigmoid())
-
+        print(f"Linear layer weights shape: {self.adv_layer[0].weight.shape}")  # Debug
+        
     def forward(self, img):
         out = self.model(img)
+        print(f"Shape after convolutional layers: {out.shape}")  # Debug
         out = out.view(out.shape[0], -1)
+        print(f"Shape after flattening: {out.shape}")  # Debug
         validity = self.adv_layer(out)
 
         return validity
@@ -157,6 +161,7 @@ for epoch in range(opt.n_epochs):
 
         # Configure input
         real_imgs = Variable(imgs.type(Tensor))
+        print(f"Shape of real_imgs: {real_imgs.shape}")  # Debug
 
         # -----------------
         #  Train Generator
@@ -169,6 +174,7 @@ for epoch in range(opt.n_epochs):
 
         # Generate a batch of images
         gen_imgs = generator(z)
+        print(f"Shape of generated images: {gen_imgs.shape}")  # Debug
 
         # Loss measures generator's ability to fool the discriminator
         g_loss = adversarial_loss(discriminator(gen_imgs), valid)
