@@ -33,6 +33,7 @@ print(opt)
 img_shape = (opt.channels, opt.img_size, opt.img_size)
 
 cuda = True if torch.cuda.is_available() else False
+print("Using GPU" if cuda else "Using CPU")
 
 
 class Generator(nn.Module):

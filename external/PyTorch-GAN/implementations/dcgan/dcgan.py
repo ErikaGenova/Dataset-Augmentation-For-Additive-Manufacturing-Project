@@ -6,7 +6,8 @@ import math
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
+from PIL import Image
 from torchvision import datasets
 from torch.autograd import Variable
 
@@ -14,24 +15,30 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+from data_loader import get_all_data, get_defect_dataset, get_no_defect_dataset
+from data_loader import DefectDataset
+
+
 os.makedirs("images", exist_ok=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
-parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
+parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
-parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
-parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
+parser.add_argument("--latent_dim", type=int, default=128, help="dimensionality of the latent space")
+parser.add_argument("--img_size", type=int, default=512, help="size of each image dimension")
 parser.add_argument("--channels", type=int, default=1, help="number of image channels")
 parser.add_argument("--sample_interval", type=int, default=400, help="interval between image sampling")
+parser.add_argument("--data_dir", type=str, default="/content/mla_project/images/original/Defects", help="path to dataset")
+parser.add_argument("--generate_defect", action="store_true", help="generate defect images")
 opt = parser.parse_args()
 print(opt)
 
 cuda = True if torch.cuda.is_available() else False
-
+print("Using GPU" if cuda else "Using CPU")
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
@@ -116,19 +123,16 @@ generator.apply(weights_init_normal)
 discriminator.apply(weights_init_normal)
 
 # Configure data loader
-os.makedirs("../../data/mnist", exist_ok=True)
-dataloader = torch.utils.data.DataLoader(
-    datasets.MNIST(
-        "../../data/mnist",
-        train=True,
-        download=True,
-        transform=transforms.Compose(
+if opt.generate_defect:
+    file_paths, labels = get_defect_dataset(opt.data_dir)
+else:
+    file_paths, labels = get_no_defect_dataset(opt.data_dir)
+
+transform=transforms.Compose(
             [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
-        ),
-    ),
-    batch_size=opt.batch_size,
-    shuffle=True,
-)
+        )
+dataset = DefectDataset(file_paths, labels, transform=transform)
+dataloader = DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
 
 # Optimizers
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
