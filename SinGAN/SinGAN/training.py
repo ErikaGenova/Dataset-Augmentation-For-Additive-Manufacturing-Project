@@ -87,7 +87,10 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
         Zs.append(z_curr)
         NoiseAmp.append(opt.noise_amp)
 
-        # Save the generator, discriminator, and noise amplitude for each scale
+        """
+            Save pth of:
+                - 
+        """
         torch.save(Zs, '%s/Zs.pth' % (opt.out_))
         torch.save(Gs, '%s/Gs.pth' % (opt.out_))
         torch.save(reals, '%s/reals.pth' % (opt.out_))
