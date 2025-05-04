@@ -124,9 +124,13 @@ discriminator.apply(weights_init_normal)
 
 # Configure data loader
 if opt.generate_defect:
+    print("Generating defect images...")
     file_paths, labels = get_defect_dataset(opt.data_dir)
 else:
+    print("Generating no defect images...")
     file_paths, labels = get_no_defect_dataset(opt.data_dir)
+
+print(f"Number of images: {len(file_paths)}")
 
 transform=transforms.Compose(
             [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
