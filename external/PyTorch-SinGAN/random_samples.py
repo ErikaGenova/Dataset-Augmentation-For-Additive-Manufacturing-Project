@@ -11,7 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('--input_name', help='input image name', required=True)
     parser.add_argument('--class_', help='input class name', required=True)
     parser.add_argument('--mode', help='random_samples | random_samples_arbitrary_sizes', default='train', required=True)
-    parser.add_argument('--dir_model', type=float, help='resize factor for random samples', default=None)
+    parser.add_argument('--dir_model', type=str, help='resize factor for random samples', default=None)
     # for random_samples:
     parser.add_argument('--gen_start_scale', type=int, help='generation start scale', default=0)
     # for random_samples_arbitrary_sizes:
