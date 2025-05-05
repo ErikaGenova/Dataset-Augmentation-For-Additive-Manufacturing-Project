@@ -290,10 +290,10 @@ def load_trained_pyramid(opt, mode_='train'):
         opt.mode = mode
     dir = generate_dir2save(opt)
     if(os.path.exists(dir)):
-        Gs = torch.load('%s/Gs.pth' % dir)
-        Zs = torch.load('%s/Zs.pth' % dir)
-        reals = torch.load('%s/reals.pth' % dir)
-        NoiseAmp = torch.load('%s/NoiseAmp.pth' % dir)
+        Gs = torch.load('%s/Gs.pth' % dir, weights_only=False)
+        Zs = torch.load('%s/Zs.pth' % dir, weights_only=False)
+        reals = torch.load('%s/reals.pth' % dir, weights_only=False)
+        NoiseAmp = torch.load('%s/NoiseAmp.pth' % dir, weights_only=False)
     else:
         print('no appropriate trained model is exist, please train first')
     opt.mode = mode
@@ -318,7 +318,7 @@ def generate_dir2save(opt):
 
     # Training Modes
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
-        dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
+        dir2save = 'TrainedModels/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'animation_train') :
         dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
     elif (opt.mode == 'paint_train') :
@@ -326,7 +326,7 @@ def generate_dir2save(opt):
     
     # Random Samples Modes
     elif opt.mode == 'random_samples':
-        dir2save = 'RandomSamples/%s/gen_start_scale=%d' % (opt.input_name[:-4], opt.gen_start_scale)
+        dir2save = 'RandomSamples/%s/%s/gen_start_scale=%d' % (opt.class_, opt.input_name[:-4], opt.gen_start_scale)
     elif opt.mode == 'random_samples_arbitrary_sizes':
         dir2save = 'RandomSamples_ArbitrerySizes/%s/scale_v=%f_scale_h=%f' % (opt.input_name[:-4], opt.scale_v, opt.scale_h)
 

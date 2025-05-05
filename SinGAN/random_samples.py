@@ -9,6 +9,7 @@ if __name__ == '__main__':
     parser = get_arguments()
     parser.add_argument('--input_dir', help='input image dir', required=True)
     parser.add_argument('--input_name', help='input image name', required=True)
+    parser.add_argument('--class_', help='input class name', required=True)
     parser.add_argument('--mode', help='random_samples | random_samples_arbitrary_sizes', default='train', required=True)
     # for random_samples:
     parser.add_argument('--gen_start_scale', type=int, help='generation start scale', default=0)

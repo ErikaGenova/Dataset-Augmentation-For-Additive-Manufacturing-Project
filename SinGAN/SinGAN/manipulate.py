@@ -151,7 +151,7 @@ def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=
 
             if n == len(reals)-1:
                 if opt.mode == 'train':
-                    dir2save = '%s/RandomSamples/%s/gen_start_scale=%d' % (opt.out, opt.input_name[:-4], gen_start_scale)
+                    dir2save = '%s/RandomSamples/%s/%s/gen_start_scale=%d' % (opt.out, opt.class_, opt.input_name[:-4], gen_start_scale)
                 else:
                     dir2save = functions.generate_dir2save(opt)
                 try:
@@ -159,8 +159,8 @@ def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=
                 except OSError:
                     pass
                 if (opt.mode != "harmonization") & (opt.mode != "editing") & (opt.mode != "SR") & (opt.mode != "paint2image"):
-                    plt.imsave('%s/%d.png' % (dir2save, i), functions.convert_image_np(I_curr.detach()), vmin=0,vmax=1, cmap='gray')
-                
+                    # add the name of image
+                    plt.imsave('%s/%s_%d.png' % (dir2save, opt.input_name[:-4], i), functions.convert_image_np(I_curr.detach()), vmin=0,vmax=1, cmap='gray')
             images_cur.append(I_curr)
         n+=1
     return I_curr.detach()

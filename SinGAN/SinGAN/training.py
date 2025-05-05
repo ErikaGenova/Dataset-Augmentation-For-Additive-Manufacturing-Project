@@ -89,7 +89,10 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         """
             Save pth of:
-                - 
+                - Gs: pth of the generator
+                - Zs: pth of the noise
+                - reals: pth of the real images
+                - NoiseAmp: pth of the noise amplitude
         """
         torch.save(Zs, '%s/Zs.pth' % (opt.out_))
         torch.save(Gs, '%s/Gs.pth' % (opt.out_))
