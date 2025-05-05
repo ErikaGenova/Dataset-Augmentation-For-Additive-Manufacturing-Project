@@ -326,14 +326,10 @@ def generate_dir2save(opt):
     
     # Random Samples Modes
     elif opt.mode == 'random_samples':
-        dir2save = '%s/RandomSamples/%s/gen_start_scale=%d' % (opt.out,opt.input_name[:-4], opt.gen_start_scale)
+        dir2save = 'RandomSamples/%s/gen_start_scale=%d' % (opt.input_name[:-4], opt.gen_start_scale)
     elif opt.mode == 'random_samples_arbitrary_sizes':
-        dir2save = '%s/RandomSamples_ArbitrerySizes/%s/scale_v=%f_scale_h=%f' % (opt.out,opt.input_name[:-4], opt.scale_v, opt.scale_h)
-    
-    # Animation Modes
-    elif opt.mode == 'animation':
-        dir2save = '%s/Animation/%s' % (opt.out, opt.input_name[:-4])
-    
+        dir2save = 'RandomSamples_ArbitrerySizes/%s/scale_v=%f_scale_h=%f' % (opt.input_name[:-4], opt.scale_v, opt.scale_h)
+
     # Super-Resolution  Mode
     elif opt.mode == 'SR':
         dir2save = '%s/SR/%s' % (opt.out, opt.sr_factor)
@@ -341,16 +337,7 @@ def generate_dir2save(opt):
     # Harmonization Mode
     elif opt.mode == 'harmonization':
         dir2save = '%s/Harmonization/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
-    
-    # Editing Mode
-    elif opt.mode == 'editing':
-        dir2save = '%s/Editing/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
-    
-    # Paint-to-Image Mode
-    elif opt.mode == 'paint2image':
-        dir2save = '%s/Paint2image/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
-        if opt.quantization_flag:
-            dir2save = '%s_quantized' % dir2save
+
     return dir2save
 
 """
