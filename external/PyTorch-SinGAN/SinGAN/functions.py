@@ -284,7 +284,7 @@ def load_trained_pyramid(opt, mode_='train', dir=None):
     opt.mode = 'train'
     if (mode == 'animation_train') | (mode == 'SR_train') | (mode == 'paint_train'):
         opt.mode = mode
-    
+
     if dir is None:
         dir = generate_dir2save(opt)
 
@@ -325,9 +325,15 @@ def generate_dir2save(opt):
     
     # Random Samples Modes
     elif opt.mode == 'random_samples':
-        dir2save = 'RandomSamples/%s/%s/gen_start_scale=%d' % (opt.class_, opt.input_name[:-4], opt.gen_start_scale)
+        if opt.dir_model is not None:
+            dir2save = 'RandomSamples/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
+        else:
+            dir2save = 'RandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
     elif opt.mode == 'random_samples_arbitrary_sizes':
-        dir2save = 'RandomSamples_ArbitrerySizes/%s/scale_v=%f_scale_h=%f' % (opt.input_name[:-4], opt.scale_v, opt.scale_h)
+        if opt.dir_model is not None:
+            dir2save = 'RandomSamples_ArbitrerySizes/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
+        else:
+            dir2save = 'RandomSamples_ArbitrerySizes/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
 
     # Super-Resolution  Mode
     elif opt.mode == 'SR':

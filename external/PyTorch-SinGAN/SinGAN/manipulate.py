@@ -152,7 +152,7 @@ def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=
             if n == len(reals)-1:
                 if opt.mode == 'train':
                     if opt.dir_model is not None:
-                        dir2save = '%s/RandomSamples/%s/%s/%s' % (opt.out, opt.class_, opt.input_name[:-4], dir_model)
+                        dir2save = '%s/RandomSamples/%s/%s/%s' % (opt.out, opt.class_, opt.input_name[:-4], opt.dir_model)
                     else:
                         dir2save = '%s/RandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.out, opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
                 else:
