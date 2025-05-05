@@ -159,6 +159,8 @@ def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=
                 except OSError:
                     pass
                 if (opt.mode != "harmonization") & (opt.mode != "editing") & (opt.mode != "SR") & (opt.mode != "paint2image"):
+                    # print that it is generating a random sample
+                    print('Generating random sample %d/%d for image %s' % (i, num_samples, opt.input_name[:-4]))
                     # add the name of image
                     plt.imsave('%s/%s_%d.png' % (dir2save, opt.input_name[:-4], i), functions.convert_image_np(I_curr.detach()), vmin=0,vmax=1, cmap='gray')
             images_cur.append(I_curr)

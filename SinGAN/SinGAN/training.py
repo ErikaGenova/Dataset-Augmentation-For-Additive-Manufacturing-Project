@@ -25,6 +25,12 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = imresize(real_, min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
     print('Image size: %d x %d' % (real_.shape[2], real_.shape[3]))
 
+    # print if the R1 penalty is used or not
+    if opt.r1_penalty == 'True':
+        print('R1 penalty is used')
+    else:
+        print('R1 penalty is not used')
+
     # Resize the image to the specified scale1
     real = imresize(real_, opt.scale1, opt)
     # Create a pyramid of images at different scales
@@ -177,11 +183,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     D_real2plot = []
     D_fake2plot = []
     z_opt2plot = []
-
-    if opt.r1_penalty == 'True':
-        print('R1 penalty is used')
-    else:
-        print('R1 penalty is not used')
 
     """
         At the beginning of each epoch, noise is generated that will be used by the generator to create synthetic images.
