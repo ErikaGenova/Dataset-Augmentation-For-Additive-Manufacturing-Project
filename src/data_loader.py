@@ -8,34 +8,24 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch
 
-# Transforms for training and validation WITHOUT augmentations
+# Transforms for training and validation WITH and WITHOUT augmentations
 data_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5830], std=[0.2075]) # mean and std computed from the dataset
+        transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ]),
-    'val': transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5830], std=[0.2075])
-    ])
-}
-
-# Transforms for training and validation WITH augmentations
-"""
-data_transforms = {
-    'train': transforms.Compose([
+    'train_aug': transforms.Compose([ # Augmentations for training
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomAdjustSharpness(sharpness_factor=2),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5830], std=[0.2075])
+        transforms.Normalize(mean=[0.5839], std=[0.2074])
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5830], std=[0.2075])
+        transforms.Normalize(mean=[0.5839], std=[0.2074])
     ])
 }
-"""
 
 class DefectDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
@@ -74,8 +64,6 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
         stratify=labels,
         random_state=random_seed
     )
-
-    # TODO: maybe it's better to perform cross-validation instead of train/val split
 
     train_paths = [file_paths[i] for i in train_idx]
     train_labels = [labels[i] for i in train_idx]

@@ -30,18 +30,29 @@ def get_class_weights(labels):
     class_weights = torch.tensor([class_weights[i] for i in range(num_classes)], dtype=torch.torch.float32)
     return class_weights
 
-def plot_confusion_matrix(y_true, y_pred, fold):
+def plot_confusion_matrix(y_true, y_pred, fold, epoch):
+    """
     cm = confusion_matrix(y_true, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     fig, ax = plt.subplots(figsize=(8, 8))
     disp.plot(cmap='Blues', ax=ax, values_format='d')
-    plt.title(f"Confusion Matrix - Fold {fold}")
+    plt.title(f"Confusion Matrix - Fold {fold} (Validation)")
 
     # Save the confusion matrix as an image
     plt.savefig(f"confusion_matrix_fold{fold}.png")
     plt.close(fig)  # Close the figure to avoid blocking
 
-    print(f"Confusion matrix for Fold {fold} saved as 'confusion_matrix_fold{fold}.png'")
+    print(f"Confusion matrix for Fold {fold} (Validation) saved as 'confusion_matrix_fold{fold}.png'")
+    return cm
+    """
+
+    cm = confusion_matrix(y_true, y_pred)
+    print(f"\n     Confusion Matrix - Fold {fold}  - Epoch {epoch+1} (Validation):")
+     # print the confusion matrix with 5 spaces indentation
+    indent = " " * 5  
+    for row in cm:
+        print(f"{indent}{row}")
+    print("\n")
     return cm
 
 def train(args):
@@ -119,12 +130,12 @@ def train(args):
     print('Training completed')
 
 
-def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights):
+def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug=False):
     '''Train one fold of the K-Fold cross-validation.'''
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
                                    [labels[i] for i in train_idx],
-                                   transform=data_transforms['train'])
+                                   transform=data_transforms['train'] )
 
     val_dataset = DefectDataset([file_paths[i] for i in val_idx],
                                  [labels[i] for i in val_idx],
@@ -133,16 +144,13 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
+    print(f"\n[Fold {fold}] Number of training images: {len(train_dataset)}")
+    print(f"[Fold {fold}] Number of validation images: {len(val_dataset)}")
     # Model
     model = build_model(backbone=args.backbone, pretrained=True)
     model.to(device)
 
-    # Freeze all layers except the last fully connected layer to avoid overfitting
-    """
-    for name, param in model.named_parameters():
-        if not name.startswith('fc'):
-            param.requires_grad = False
-    """
+    # Freeze all layers except the last fully connected layer and layer4 to avoid overfitting
     for name, param in model.named_parameters():
         if "layer4" in name or "fc" in name:
             param.requires_grad = True
@@ -161,7 +169,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     
     for epoch in range(args.epochs):
         # Training loop
-        print("\n-- train --")
+        #print("\n-- train --")
         model.train()
         pred_tot = []
         label_tot = []
@@ -181,11 +189,11 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
             label_tot.extend([t.item() for t in targets])
         train_loss = running_loss / total
         train_acc = correct / total
-        print("Predictions: ", pred_tot)
-        print("Labels: ", label_tot)
+        #print("Predictions: ", pred_tot)
+        #print("Labels: ", label_tot)
 
         # Validation loop
-        print("\n-- val --")
+        #print("\n-- val --")
         pred_tot = []
         label_tot = []
         model.eval()
@@ -209,31 +217,45 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         val_loss = val_running_loss / val_total
         val_acc = val_correct / val_total
 
-        print("Predictions: ", pred_tot)
-        print("Labels: ", label_tot)
+        #print("Predictions: ", pred_tot)
+        #print("Labels: ", label_tot)
 
         # Calculate precision, recall, and F1-score
-        precision = precision_score(all_targets, all_preds, average='weighted')
-        recall = recall_score(all_targets, all_preds, average='weighted')
-        f1 = f1_score(all_targets, all_preds, average='weighted')
+        precision = precision_score(all_targets, all_preds, average='weighted', zero_division=0)
+        recall = recall_score(all_targets, all_preds, average='weighted', zero_division=0)
+        f1 = f1_score(all_targets, all_preds, average='weighted', zero_division=0)
 
+        # Calculate per class metrics
+        precision_per_class = precision_score(all_targets, all_preds, average=None, zero_division=0)
+        recall_per_class = recall_score(all_targets, all_preds, average=None, zero_division=0)
+        f1_per_class = f1_score(all_targets, all_preds, average=None, zero_division=0)
+        
         # Update learning rate
         scheduler.step()
 
-        # Log metrics
+        # Log metrics (save global metrics but print per class metrics)
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc, precision, recall, f1])
         print(f"[Fold {fold}] Epoch {epoch+1}/{args.epochs} | "
               f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.4f} | "
-              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f} | "
+              f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.4f}, "
               f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
         
+        """
+        for i, (p, r, f) in enumerate(zip(precision_per_class, recall_per_class, f1_per_class)):
+            if i == 0:
+                print(f"     Class {i} (NoDefects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (No Defects)")
+            else:
+                print(f"     Class {i} (Defects): Precision: {p:.4f}, Recall: {r:.4f}, F1: {f:.4f} (Defects)")
+        """
         # Save best model checkpoint
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), f"{args.checkpoint}_fold{fold}.pth")
-
-        # Plot Confusion matrix
-        plot_confusion_matrix(all_targets, all_preds, fold)
+            # Save the checkpoint in the specified output directory
+            checkpoint_path = os.path.join(args.output_dir, f"{args.checkpoint}_fold{fold}.pth")
+            torch.save(model.state_dict(), checkpoint_path)
+            
+        # Plot Validation Confusion matrix
+        #plot_confusion_matrix(all_targets, all_preds, fold, epoch)
 
     return logs
 
@@ -246,20 +268,36 @@ def train_kfold(args):
     labels = np.array(labels)
     kf = StratifiedKFold(n_splits=args.k_folds, shuffle=True, random_state=42)
 
-    all_logs, fold_accuracies = [], []
+    all_logs, fold_metrics = [], []
 
     # Compute class weights
     class_weights = get_class_weights(labels)
 
+    # check augmentation
+    aug = True if args.aug == 'True' else False
+
     for fold, (train_idx, val_idx) in enumerate(kf.split(file_paths, labels), 1):
         print(f"\n===== Fold {fold} =====")
-        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights)
+        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug)
         all_logs += [[fold] + row for row in logs]
-        fold_accuracies.append(max([log[4] for log in logs]))  # Collect best accuracy for each fold
+        
+        # Save metrics of the last epoch for this fold
+        last_epoch_metrics = logs[-1]  # Metrics of the last epoch
+        fold_metrics.append(last_epoch_metrics[2:7])  # Extract exactly [val_loss, val_acc, precision, recall, f1]
 
-    # Calculate average accuracy across folds
-    avg_accuracy = sum(fold_accuracies) / len(fold_accuracies)
-    print(f"\nAverage Accuracy across {args.k_folds} folds: {avg_accuracy:.4f}")
+    # Convert fold_metrics to a NumPy array for averaging
+    fold_metrics = np.array(fold_metrics, dtype=float)
+
+    # Calculate average metrics across folds
+    avg_metrics = np.mean(fold_metrics, axis=0)
+    avg_val_loss, avg_val_acc, avg_precision, avg_recall, avg_f1 = avg_metrics
+
+    print(f"\n===== Overall Metrics Across {args.k_folds} Folds =====")
+    print(f"Average Validation Loss: {avg_val_loss:.4f}")
+    print(f"Average Validation Accuracy: {avg_val_acc:.4f}")
+    print(f"Average Precision: {avg_precision:.4f}")
+    print(f"Average Recall: {avg_recall:.4f}")
+    print(f"Average F1-Score: {avg_f1:.4f}")
 
     # Save all logs to CSV
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
@@ -267,18 +305,7 @@ def train_kfold(args):
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser("Train PBF defect detector")
-    # parser.add_argument('--data-dir', type=str, required=True)
-    # parser.add_argument('--batch-size', type=int, default=16)
-    # parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
-    # parser.add_argument('--epochs', type=int, default=20)
-    # parser.add_argument('--lr', type=float, default=1e-4)
-    # parser.add_argument('--backbone', type=str, default='resnet50')
-    # parser.add_argument('--num-workers', type=int, default=4)
-    # parser.add_argument('--checkpoint', type=str, default='best_model.pth', help='Path to save best model')
-    # args = parser.parse_args()
-    # train(args)
-    parser = argparse.ArgumentParser("Train PBF defect detector with K-Fold")
+    parser = argparse.ArgumentParser("Train PBF defect detector")
     parser.add_argument('--data-dir', type=str, required=True)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--epochs', type=int, default=20)
@@ -286,7 +313,20 @@ if __name__ == '__main__':
     parser.add_argument('--backbone', type=str, default='resnet50')
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
+    parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
+    parser.add_argument('--is_kfold', action='store_true', default=True, help='Use K-Fold cross-validation')
+    parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
+    parser.add_argument('--output-dir', type=str, default='resnet_checkpoints', help='Directory to save checkpoints')  # New argument
     args = parser.parse_args()
 
-    train_kfold(args)
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    if args.is_kfold:
+        print("Training with K-Fold cross-validation")
+        train_kfold(args)
+    else:
+        print("Training with single train/val split")
+        train(args)

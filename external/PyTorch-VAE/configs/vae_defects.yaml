@@ -1,0 +1,36 @@
+
+model_params:
+  # switch to "ConditionalVAE" if you want a cVAE
+  name:        "VanillaVAE"    
+  in_channels: 1 # grayscale images
+  latent_dim:  128
+
+data_params:
+  # use ImageFolder so that subfolders are your classes:
+  dataset_type: ImageFolder
+  data_path:    "/content/mla_project/images/original"
+  train_batch_size: 8
+  val_batch_size:   8
+  patch_size:       64    # VAE will center-crop / resize to this
+  train_split:      0.8
+  num_workers:      2
+
+exp_params:
+    #LR:           5e-3
+  LR:           0.005
+  weight_decay: 0.0
+  kld_weight:   2.5e-4
+  manual_seed:  42
+
+# trainer_params:
+#   gpus:       [0]     # or [0,1] if you have multiple
+#   max_epochs: 100
+
+trainer_params:
+  accelerator: gpu      # instead of gpus
+  devices: 1            # number of GPUs
+  max_epochs: 200
+
+logging_params:
+  save_dir: "/content/vae_logs/"
+  name:     "VAE_defect"
