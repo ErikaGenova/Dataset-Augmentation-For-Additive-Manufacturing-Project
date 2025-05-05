@@ -11,6 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('--input_name', help='input image name', required=True)
     parser.add_argument('--class_', help='input class name', required=True)
     parser.add_argument('--mode', help='random_samples | random_samples_arbitrary_sizes', default='train', required=True)
+    parser.add_argument('--dir_model', type=float, help='resize factor for random samples', default=None)
     # for random_samples:
     parser.add_argument('--gen_start_scale', type=int, help='generation start scale', default=0)
     # for random_samples_arbitrary_sizes:
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         if opt.mode == 'random_samples':
             real = functions.read_image(opt)
             functions.adjust_scales2image(real, opt)
-            Gs, Zs, reals, NoiseAmp = functions.load_trained_pyramid(opt)
+            Gs, Zs, reals, NoiseAmp = functions.load_trained_pyramid(opt, opt.dir_model)
             in_s = functions.generate_in2coarsest(reals,1,1,opt)
             SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, gen_start_scale=opt.gen_start_scale)
 
