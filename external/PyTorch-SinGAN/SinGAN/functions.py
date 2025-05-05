@@ -317,23 +317,23 @@ def generate_dir2save(opt):
 
     # Training Modes
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
-        dir2save = 'TrainedModels/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
+        dir2save = 'SinGANTrainedModels/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'animation_train') :
-        dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
+        dir2save = 'SinGANTrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
     elif (opt.mode == 'paint_train') :
-        dir2save = 'TrainedModels/%s/scale_factor=%f_paint/start_scale=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.paint_start_scale)
+        dir2save = 'SinGANTrainedModels/%s/scale_factor=%f_paint/start_scale=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.paint_start_scale)
     
     # Random Samples Modes
     elif opt.mode == 'random_samples':
         if opt.dir_model is not None:
-            dir2save = 'RandomSamples/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
+            dir2save = 'SinGANRandomSamples/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
         else:
-            dir2save = 'RandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
+            dir2save = 'SinGANRandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
     elif opt.mode == 'random_samples_arbitrary_sizes':
         if opt.dir_model is not None:
-            dir2save = 'RandomSamples_ArbitrerySizes/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
+            dir2save = 'SinGANRandomSamples_ArbitrerySizes/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
         else:
-            dir2save = 'RandomSamples_ArbitrerySizes/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
+            dir2save = 'SinGANRandomSamples_ArbitrerySizes/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
 
     # Super-Resolution  Mode
     elif opt.mode == 'SR':
@@ -341,7 +341,7 @@ def generate_dir2save(opt):
     
     # Harmonization Mode
     elif opt.mode == 'harmonization':
-        dir2save = '%s/Harmonization/%s/%s_out' % (opt.out, opt.input_name[:-4],opt.ref_name[:-4])
+        dir2save = 'SinGANHarmonization/%s/%s_out' % (opt.input_name[:-4],opt.ref_name[:-4])
 
     return dir2save
 
@@ -360,7 +360,7 @@ def post_config(opt):
     opt.scale_factor_init = opt.scale_factor # scale factor for the image pyramid
 
     # Builds a path to save the trained model
-    opt.out_ = 'TrainedModels/%s/scale_factor=%f/' % (opt.input_name[:-4], opt.scale_factor)
+    opt.out_ = 'SinGANTrainedModels/%s/scale_factor=%f/' % (opt.input_name[:-4], opt.scale_factor)
     if opt.mode == 'SR':
         opt.alpha = 100
 
