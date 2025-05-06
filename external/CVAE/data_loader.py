@@ -41,7 +41,7 @@ class DefectDataset(Dataset):
         image = Image.open(img_path).convert('L')  # grayscale
         if self.transform:
             image = self.transform(image)
-        return image
+        return image, label
 
 
 def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, random_seed=42):
