@@ -33,6 +33,9 @@ class Model(nn.Module):
         self.conv5 = nn.ConvTranspose2d(1, 1, kernel_size=4)
 
     def encoder(self,x,y):
+        print("x shape: ", x.shape)
+        print("y shape: ", y.shape)
+        # Class conditioning
         y = torch.argmax(y, dim=1).reshape((y.shape[0],1,1,1))
         y = torch.ones(x.shape).to(device)*y
         t = torch.cat((x,y),dim=1)

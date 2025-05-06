@@ -27,9 +27,10 @@ transform_2 = torchvision.transforms.Compose([
 
 class DefectDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
-    def __init__(self, file_paths, labels, transform=None):
+    def __init__(self, file_paths, labels, num_classes=2, transform=None):
         self.file_paths = file_paths
         self.labels = labels
+        self.num_classes = num_classes
         self.transform = transform
 
     def __len__(self):
@@ -41,7 +42,10 @@ class DefectDataset(Dataset):
         image = Image.open(img_path).convert('L')  # grayscale
         if self.transform:
             image = self.transform(image)
-        return image, label
+        # Convert label to one-hot encoding
+        label_one_hot = torch.zeros(self.num_classes)
+        label_one_hot[label] = 1
+        return image, label_one_hot
 
 
 def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, random_seed=42):
@@ -68,11 +72,11 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
     val_paths = [file_paths[i] for i in val_idx]
     val_labels = [labels[i] for i in val_idx]
 
-    train_ds = DefectDataset(train_paths, train_labels, transform=transform_2)
-    val_ds   = DefectDataset(val_paths, val_labels, transform=transform_2)
+    train_ds = DefectDataset(train_paths, train_labels, num_classes=len(classes), transform=transform_2)
+    val_ds = DefectDataset(val_paths, val_labels, num_classes=len(classes), transform=transform_2)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, val_loader
 
