@@ -23,7 +23,9 @@ transform_1 = {
 
 # To Tensor only
 transform_2 = torchvision.transforms.Compose([
-                            torchvision.transforms.ToTensor()])
+    torchvision.transforms.Resize((28, 28)),  # Resize images to 28x28
+    torchvision.transforms.ToTensor()
+])
 
 class DefectDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''

@@ -40,14 +40,15 @@ class Model(nn.Module):
 
         y = torch.ones(x.shape).to(device)*y
         t = torch.cat((x,y),dim=1)
+        # torch.Size([4, 2, 1024, 1280])
         
         t = F.relu(self.conv1(t))
         t = F.relu(self.conv2(t))
-        print("t shape before reshape: ", t.shape)
+        print("t shape before reshape: ", t.shape)      # torch.Size([4, 32, 253, 317])
         t = t.reshape((x.shape[0], -1))
-        print("t shape after reshape: ", t.shape)
+        print("t shape after reshape: ", t.shape)       # torch.Size([4, 2566432])
         
-        t = F.relu(self.linear1(t))
+        t = F.relu(self.linear1(t))     # linear1 is 512
         mu = self.mu(t)
         logvar = self.logvar(t)
         return mu, logvar
