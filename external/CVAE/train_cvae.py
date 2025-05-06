@@ -104,7 +104,6 @@ def train(epoch, model, train_loader, optim):
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
-    print("Training epoch: ", epoch)
     for i,(x,y) in enumerate(train_loader):
         try:
             label = np.zeros((x.shape[0], 2))
@@ -143,7 +142,6 @@ def train(epoch, model, train_loader, optim):
     return total_loss, kld_loss,reconstruction_loss
 
 def test(epoch, model, test_loader):
-    print("Testing epoch: ", epoch)
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
