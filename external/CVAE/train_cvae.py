@@ -185,7 +185,7 @@ def generate_image(epoch,z, y, model):
 
 
 
-def load_data(data_dir, batch_size, num_workers):
+def load_data(data_dir, batch_size, num_workers, image_size):
     # train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
     #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
     # test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
@@ -196,7 +196,8 @@ def load_data(data_dir, batch_size, num_workers):
         batch_size=batch_size,
         val_split=0.2,  # Adjust validation split ratio if needed
         num_workers=num_workers,
-        random_seed=42  # Ensure reproducibility
+        random_seed=42,  # Ensure reproducibility
+        image_size=image_size,
     )
 
     return train_loader, test_loader
@@ -220,6 +221,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_workers", type=int, default=2, help="Number of workers for data loading.")
     parser.add_argument("--load_epoch", type=int, default=-1, help="Epoch to load for checkpoint (-1 for no checkpoint).")
     parser.add_argument("--generate", type=bool, default=True, help="Whether to generate images during testing.")
+    parser.add_argument("--latent_size", type=int, default=128, help="Size of the latent space.")
+    parser.add_argument("--image_size", type=int, default=512, help="Size of the input images.")
     args = parser.parse_args()
 
     # Assign variables from parsed arguments
@@ -231,14 +234,16 @@ if __name__ == "__main__":
     load_epoch = args.load_epoch
     generate = args.generate
     data_dir = args.data_dir
+    latent_size = args.latent_size
+    image_size = args.image_size
 
     # Load data and initialize model
-    train_loader, test_loader = load_data(data_dir, batch_size, num_workers)
+    train_loader, test_loader = load_data(data_dir, batch_size, num_workers, image_size)
     # print how many images are in each loader
     print("Train dataset size: ", len(train_loader.dataset))
     print("Test dataset size: ", len(test_loader.dataset))
     
-    model = Model().to(device)
+    model = Model(latent_size).to(device)
     print("Model created.")
     
     if load_epoch > 0:
