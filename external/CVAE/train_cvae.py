@@ -62,7 +62,9 @@ class Model(nn.Module):
         return eps*std + mu
     
     def unFlatten(self, x):
-        return x.reshape((x.shape[0], 32, 4, 4))
+        # Dynamically reshape based on the computed size
+        conv2_output_size = int(self.flattened_size // (32 * 32))
+        return x.reshape((x.shape[0], 32, conv2_output_size, conv2_output_size))
 
     def decoder(self, z):
         t = F.relu(self.linear2(z))
