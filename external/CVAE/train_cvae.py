@@ -87,7 +87,7 @@ def plot(epoch, pred, y,name='test_'):
         ax.imshow(pred[i,0],cmap='gray')
         ax.axis('off')
         ax.title.set_text(str(y[i]))
-    plt.savefig("./images/{}epoch_{}.jpg".format(name, epoch))
+    plt.savefig("/content/cvae_images/{}epoch_{}.jpg".format(name, epoch))
     # plt.figure(figsize=(10,10))
     # plt.imsave("./images/pred_{}.jpg".format(epoch), pred[0,0], cmap='gray')
     plt.close()
