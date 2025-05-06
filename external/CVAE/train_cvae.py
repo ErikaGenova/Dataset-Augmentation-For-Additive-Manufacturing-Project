@@ -8,6 +8,8 @@ import torch.optim as optim
 import os
 import sys
 import argparse
+from data_loader import get_dataloaders
+
 
 class Model(nn.Module):
     def __init__(self,latent_size=32,num_classes=10):
@@ -177,14 +179,22 @@ def generate_image(epoch,z, y, model):
 
 
 
-def load_data():
+def load_data(data_dir, batch_size, num_workers):
     transform = torchvision.transforms.Compose([
                                torchvision.transforms.ToTensor()])
-    train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
-                             transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
-                             transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    # train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
+    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    # test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
+    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
+    train_loader, test_loader = get_dataloaders(
+        data_dir=data_dir,
+        batch_size=batch_size,
+        val_split=0.2,  # Adjust validation split ratio if needed
+        num_workers=num_workers,
+        random_seed=42  # Ensure reproducibility
+    )
+
     return train_loader, test_loader
 
 def save_model(model, epoch):
@@ -198,6 +208,7 @@ def save_model(model, epoch):
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Train a Conditional Variational Autoencoder (CVAE).")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to the dataset directory.")
     parser.add_argument("--batch_size", type=int, default=100, help="Batch size for training.")
     parser.add_argument("--learning_rate", type=float, default=1e-3, help="Learning rate for the optimizer.")
     parser.add_argument("--max_epoch", type=int, default=100, help="Number of epochs for training.")
@@ -215,6 +226,7 @@ if __name__ == "__main__":
     num_workers = args.num_workers
     load_epoch = args.load_epoch
     generate = args.generate
+    data_dir = args.data_dir
 
     # Load data and initialize model
     train_loader, test_loader = load_data()
