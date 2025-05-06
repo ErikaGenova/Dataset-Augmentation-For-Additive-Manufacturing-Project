@@ -7,25 +7,23 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch
+import torchvision
 
-# Transforms for training and validation WITH and WITHOUT augmentations
-data_transforms = {
+# To Tensor and Normalize
+transform_1 = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
-    ]),
-    'train_aug': transforms.Compose([ # Augmentations for training
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
-        transforms.RandomAdjustSharpness(sharpness_factor=2),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # mean and std computed from the dataset
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5])
     ])
 }
+
+# To Tensor only
+transform_2 = torchvision.transforms.Compose([
+                            torchvision.transforms.ToTensor()])
 
 class DefectDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
@@ -70,8 +68,8 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
     val_paths = [file_paths[i] for i in val_idx]
     val_labels = [labels[i] for i in val_idx]
 
-    train_ds = DefectDataset(train_paths, train_labels, transform=data_transforms['train'])
-    val_ds   = DefectDataset(val_paths, val_labels, transform=data_transforms['val'])
+    train_ds = DefectDataset(train_paths, train_labels, transform=transform_2)
+    val_ds   = DefectDataset(val_paths, val_labels, transform=transform_2)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)

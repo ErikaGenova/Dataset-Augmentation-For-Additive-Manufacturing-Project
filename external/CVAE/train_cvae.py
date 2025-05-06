@@ -180,8 +180,6 @@ def generate_image(epoch,z, y, model):
 
 
 def load_data(data_dir, batch_size, num_workers):
-    transform = torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor()])
     # train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
     #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
     # test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
