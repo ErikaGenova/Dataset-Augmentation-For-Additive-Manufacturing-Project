@@ -13,7 +13,7 @@ from data_loader import get_dataloaders
 
 
 class Model(nn.Module):
-    def __init__(self,latent_size=32,num_classes=10):
+    def __init__(self,latent_size=32,num_classes=2):
         super(Model,self).__init__()
         self.latent_size = latent_size
         self.num_classes = num_classes
