@@ -37,6 +37,7 @@ class Model(nn.Module):
         print("y shape: ", y.shape)
         # Class conditioning
         y = torch.argmax(y, dim=1).reshape((y.shape[0],1,1,1))
+
         y = torch.ones(x.shape).to(device)*y
         t = torch.cat((x,y),dim=1)
         
@@ -106,7 +107,7 @@ def train(epoch, model, train_loader, optim):
     print("Training epoch: ", epoch)
     for i,(x,y) in enumerate(train_loader):
         try:
-            label = np.zeros((x.shape[0], 10))
+            label = np.zeros((x.shape[0], 2))
             label[np.arange(x.shape[0]), y] = 1
             label = torch.tensor(label)
 
