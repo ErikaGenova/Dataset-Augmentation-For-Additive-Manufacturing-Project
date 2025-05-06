@@ -79,8 +79,8 @@ class Model(nn.Module):
 
 
 def plot(epoch, pred, y,name='test_'):
-    if not os.path.isdir('./images'):
-        os.mkdir('./images')
+    if not os.path.isdir('/content/cvae_images'):
+        os.mkdir('/content/cvae_images')
     fig = plt.figure(figsize=(16,16))
     for i in range(len(pred)):
         ax = fig.add_subplot(3,2,i+1)
