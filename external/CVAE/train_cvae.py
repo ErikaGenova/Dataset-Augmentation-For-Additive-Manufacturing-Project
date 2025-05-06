@@ -62,8 +62,8 @@ class Model(nn.Module):
         return eps*std + mu
     
     def unFlatten(self, x):
-        # Dynamically reshape based on the computed size
-        conv2_output_size = int(self.flattened_size // (32 * 32))
+        # Compute the height and width dynamically
+        conv2_output_size = int((self.flattened_size // 32) ** 0.5)
         return x.reshape((x.shape[0], 32, conv2_output_size, conv2_output_size))
 
     def decoder(self, z):
@@ -175,7 +175,7 @@ def test(epoch, model, test_loader):
                     # print("pred:", pred[0,0,:5,:5])
                     plot(epoch, pred.cpu().data.numpy(), y.cpu().data.numpy())
             except Exception as e:
-                traceback.print_exe()
+                traceback.print_exc()
                 torch.cuda.empty_cache()
                 continue
     reconstruction_loss /= len(test_loader.dataset)
