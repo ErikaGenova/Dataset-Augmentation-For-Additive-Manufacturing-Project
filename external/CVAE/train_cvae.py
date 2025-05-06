@@ -122,6 +122,7 @@ def train(epoch, model, train_loader, optim):
             total_loss += loss.cpu().data.numpy()*x.shape[0]
             reconstruction_loss += recon_loss.cpu().data.numpy()*x.shape[0]
             kld_loss += kld.cpu().data.numpy()*x.shape[0]
+            """
             if i == 0:
                 print("Gradients")
                 for name,param in model.named_parameters():
@@ -130,6 +131,7 @@ def train(epoch, model, train_loader, optim):
                     else:
                         print(name,param.grad[0,0],end=" ")
                     print()
+            """
         except Exception as e:
             traceback.print_exe()
             torch.cuda.empty_cache()
