@@ -262,7 +262,7 @@ if __name__ == "__main__":
             model.eval()
             test_total, test_kld, test_loss = test(i, model, test_loader)
             if generate:
-                z = torch.randn(6, 32).to(device)  # Generate random latent vectors
+                z = torch.randn(6, latent_size).to(device)  # Generate random latent vectors
                 y = torch.tensor([0, 1, 0, 1, 0, 1]).to(device)  # Alternate between class 0 and 1
                 generate_image(i, z, y, model)
             
