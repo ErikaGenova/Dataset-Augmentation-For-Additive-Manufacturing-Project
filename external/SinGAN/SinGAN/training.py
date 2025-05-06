@@ -100,10 +100,13 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
                 - reals: pth of the real images
                 - NoiseAmp: pth of the noise amplitude
         """
-        torch.save(Zs, '%s/Zs.pth' % (opt.out_))
-        torch.save(Gs, '%s/Gs.pth' % (opt.out_))
-        torch.save(reals, '%s/reals.pth' % (opt.out_))
-        torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
+
+        # Last scale, save the model and results
+        if scale_num == opt.stop_scale:
+            torch.save(Zs, '%s/Zs.pth' % (opt.out_))
+            torch.save(Gs, '%s/Gs.pth' % (opt.out_))
+            torch.save(reals, '%s/reals.pth' % (opt.out_))
+            torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
         
         # Update the scale number and the previous number of filters
         scale_num+=1
@@ -361,7 +364,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         D_fake2plot.append(D_G_z)
         z_opt2plot.append(rec_loss)
 
-        if epoch % 10 == 0 or epoch == (opt.niter-1):
+        if epoch % 50 == 0 or epoch == (opt.niter-1):
             print(f'scale {len(Gs)}:[{epoch}/{opt.niter}] - errD: {errD.item():.4f}, errG: {errG.item():.4f}')
 
         """
@@ -381,6 +384,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             plt.imsave('%s/fake_sample.png' %  (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1, cmap='gray')
             plt.imsave('%s/G(z_opt).png'    % (opt.outf),  functions.convert_image_np(netG(Z_opt.detach(), z_prev).detach()), vmin=0, vmax=1, cmap='gray')
 
+        if epoch == (opt.niter-1):
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
 
         schedulerD.step()
