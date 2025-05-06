@@ -184,7 +184,6 @@ def generate_image(epoch,z, y, model):
 
         pred = model.decoder(torch.cat((z.to(device),label.float().to(device)), dim=1))
         plot(epoch, pred.cpu().data.numpy(), y.cpu().data.numpy(),name='Eval_')
-        print("data Plotted")
 
 
 
@@ -201,8 +200,6 @@ def load_data(data_dir, batch_size, num_workers):
         num_workers=num_workers,
         random_seed=42  # Ensure reproducibility
     )
-
-    print("Data loaded successfully")
 
     return train_loader, test_loader
 
@@ -239,12 +236,12 @@ if __name__ == "__main__":
 
     # Load data and initialize model
     train_loader, test_loader = load_data(data_dir, batch_size, num_workers)
-    print("dataloader created")
+    print("Dataloader created")
     # print how many images are in each loader
     print("train_loader size: ", len(train_loader.dataset))
     print("test_loader size: ", len(test_loader.dataset))
     model = Model().to(device)
-    print("model created")
+    print("Model created")
     
     if load_epoch > 0:
         model.load_state_dict(torch.load('./checkpoints/model_{}.pt'.format(load_epoch), map_location=torch.device('cpu')))
