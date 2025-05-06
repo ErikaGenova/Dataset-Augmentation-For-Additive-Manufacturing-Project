@@ -176,7 +176,7 @@ def test(epoch, model, test_loader):
 
 def generate_image(epoch,z, y, model):
     with torch.no_grad():
-        label = np.zeros((y.shape[0], 10))
+        label = np.zeros((y.shape[0], 2))
         label[np.arange(z.shape[0]), y] = 1
         label = torch.tensor(label)
 
@@ -260,9 +260,9 @@ if __name__ == "__main__":
             model.eval()
             test_total, test_kld, test_loss = test(i, model, test_loader)
             if generate:
-                z = torch.randn(6, 32).to(device)
-                y = torch.tensor([1,2,3,4,5,6]) - 1
-                generate_image(i,z, y, model)
+                z = torch.randn(6, 32).to(device)  # Generate random latent vectors
+                y = torch.tensor([0, 1, 0, 1, 0, 1]).to(device)  # Alternate between class 0 and 1
+                generate_image(i, z, y, model)
             
         print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch,train_total, train_kld, train_loss))
         print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
