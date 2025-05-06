@@ -185,14 +185,14 @@ def test(epoch, model, test_loader):
 
 
 
-def generate_image(epoch,z, y, model):
+def generate_image(epoch, z, y, model):
     with torch.no_grad():
         label = np.zeros((y.shape[0], 2))
-        label[np.arange(z.shape[0]), y] = 1
+        label[np.arange(z.shape[0]), y.cpu().numpy()] = 1  # Move `y` to CPU and convert to NumPy
         label = torch.tensor(label)
 
-        pred = model.decoder(torch.cat((z.to(device),label.float().to(device)), dim=1))
-        plot(epoch, pred.cpu().data.numpy(), y.cpu().data.numpy(),name='Eval_')
+        pred = model.decoder(torch.cat((z.to(device), label.float().to(device)), dim=1))
+        plot(epoch, pred.cpu().data.numpy(), y.cpu().numpy(), name='Eval_')
 
 
 
