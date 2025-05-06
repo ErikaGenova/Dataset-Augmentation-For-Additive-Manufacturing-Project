@@ -54,3 +54,6 @@ dkms.conf
 
 # Macbook specific
 .DS_Store
+
+# pyc files
+**.pyc**
