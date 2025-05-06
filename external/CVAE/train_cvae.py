@@ -99,6 +99,7 @@ def train(epoch, model, train_loader, optim):
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
+    print("Training epoch: ", epoch)
     for i,(x,y) in enumerate(train_loader):
         try:
             label = np.zeros((x.shape[0], 10))
@@ -135,6 +136,7 @@ def train(epoch, model, train_loader, optim):
     return total_loss, kld_loss,reconstruction_loss
 
 def test(epoch, model, test_loader):
+    print("Testing epoch: ", epoch)
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
@@ -193,6 +195,8 @@ def load_data(data_dir, batch_size, num_workers):
         random_seed=42  # Ensure reproducibility
     )
 
+    print("Data loaded successfully")
+
     return train_loader, test_loader
 
 def save_model(model, epoch):
@@ -229,6 +233,9 @@ if __name__ == "__main__":
     # Load data and initialize model
     train_loader, test_loader = load_data()
     print("dataloader created")
+    # print how many images are in each loader
+    print("train_loader size: ", len(train_loader.dataset))
+    print("test_loader size: ", len(test_loader.dataset))
     model = Model().to(device)
     print("model created")
     
