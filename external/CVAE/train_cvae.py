@@ -151,7 +151,7 @@ def test(epoch, model, test_loader):
     with torch.no_grad():
         for i,(x,y) in enumerate(test_loader):
             try:
-                label = np.zeros((x.shape[0], 10))
+                label = np.zeros((x.shape[0], 2))
                 label[np.arange(x.shape[0]), y] = 1
                 label = torch.tensor(label)
 
