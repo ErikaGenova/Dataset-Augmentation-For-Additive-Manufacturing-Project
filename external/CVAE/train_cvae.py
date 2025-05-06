@@ -143,7 +143,7 @@ def train(epoch, model, train_loader, optim):
                     print()
             """
         except Exception as e:
-            traceback.print_exe()
+            traceback.print_exc()
             torch.cuda.empty_cache()
             continue
     
