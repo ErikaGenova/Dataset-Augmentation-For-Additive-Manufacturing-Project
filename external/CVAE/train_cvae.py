@@ -43,7 +43,9 @@ class Model(nn.Module):
         
         t = F.relu(self.conv1(t))
         t = F.relu(self.conv2(t))
+        print("t shape before reshape: ", t.shape)
         t = t.reshape((x.shape[0], -1))
+        print("t shape after reshape: ", t.shape)
         
         t = F.relu(self.linear1(t))
         mu = self.mu(t)
