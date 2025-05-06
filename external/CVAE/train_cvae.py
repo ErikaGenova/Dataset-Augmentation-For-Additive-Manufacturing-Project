@@ -231,7 +231,7 @@ if __name__ == "__main__":
     data_dir = args.data_dir
 
     # Load data and initialize model
-    train_loader, test_loader = load_data()
+    train_loader, test_loader = load_data(data_dir, batch_size, num_workers)
     print("dataloader created")
     # print how many images are in each loader
     print("train_loader size: ", len(train_loader.dataset))
