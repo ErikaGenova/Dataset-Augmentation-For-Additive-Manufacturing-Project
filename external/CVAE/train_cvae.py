@@ -280,7 +280,10 @@ if __name__ == "__main__":
         print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch,train_total, train_kld, train_loss))
         print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
-        save_model(model, i)
+        if i % 10 == 0 or i == max_epoch-1:
+            # Save the model every 10 epochs
+            print("Saving model...")
+            save_model(model, i)
         train_loss_list.append([train_total, train_kld, train_loss])
         test_loss_list.append([test_total, test_kld, test_loss])
         np.save("train_loss", np.array(train_loss_list))
