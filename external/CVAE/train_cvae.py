@@ -234,20 +234,20 @@ if __name__ == "__main__":
 
     # Load data and initialize model
     train_loader, test_loader = load_data(data_dir, batch_size, num_workers)
-    print("Dataloader created")
     # print how many images are in each loader
-    print("train_loader size: ", len(train_loader.dataset))
-    print("test_loader size: ", len(test_loader.dataset))
+    print("Train dataset size: ", len(train_loader.dataset))
+    print("Test dataset size: ", len(test_loader.dataset))
+    
     model = Model().to(device)
-    print("Model created")
+    print("Model created.")
     
     if load_epoch > 0:
         model.load_state_dict(torch.load('./checkpoints/model_{}.pt'.format(load_epoch), map_location=torch.device('cpu')))
-        print("model {} loaded".format(load_epoch))
+        print("Model {} loaded".format(load_epoch))
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.001)
 
-
+    print("\n Starting training...")
     train_loss_list = []
     test_loss_list = []
     for i in range(load_epoch+1, max_epoch):
