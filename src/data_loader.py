@@ -12,18 +12,21 @@ import torch
 data_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ]),
     'train_aug': transforms.Compose([ # Augmentations for training
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomAdjustSharpness(sharpness_factor=2),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ])
 }
 
@@ -46,7 +49,7 @@ class DefectDataset(Dataset):
         return image, label
 
 
-def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, random_seed=42):
+def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, random_seed=42, test=False, test_split=0.2):
     '''Split Defects/NoDefects into train and val loaders.'''
     classes = ['NoDefects', 'Defects']
     file_paths, labels = [], []
@@ -57,29 +60,55 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
             file_paths += files
             labels += [idx] * len(files)
 
-    # train/val split stratified by label
-    train_idx, val_idx = train_test_split(
-        list(range(len(file_paths))),
-        test_size=val_split,
-        stratify=labels,
-        random_state=random_seed
-    )
+    if test:
+        # train/val/test split stratified by label
+        train_idx, temp_idx = train_test_split(
+            list(range(len(file_paths))),
+            test_size=(val_split + test_split),
+            stratify=labels,
+            random_state=random_seed
+        )
+        val_size = val_split / (val_split + test_split)
+        val_idx, test_idx = train_test_split(
+            temp_idx,
+            test_size=(1 - val_size),
+            stratify=[labels[i] for i in temp_idx],
+            random_state=random_seed
+        )
 
-    train_paths = [file_paths[i] for i in train_idx]
-    train_labels = [labels[i] for i in train_idx]
-    val_paths = [file_paths[i] for i in val_idx]
-    val_labels = [labels[i] for i in val_idx]
+        train_paths = [file_paths[i] for i in train_idx]
+        train_labels = [labels[i] for i in train_idx]
+        val_paths = [file_paths[i] for i in val_idx]
+        val_labels = [labels[i] for i in val_idx]
+        test_paths = [file_paths[i] for i in test_idx]
+        test_labels = [labels[i] for i in test_idx]
+        test_ds = DefectDataset(test_paths, test_labels, transform=data_transforms['val'])
+        test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    else:
+         # train/val split stratified by label
+        train_idx, val_idx = train_test_split(
+            list(range(len(file_paths))),
+            test_size=val_split,
+            stratify=labels,
+            random_state=random_seed
+        )
 
+        train_paths = [file_paths[i] for i in train_idx]
+        train_labels = [labels[i] for i in train_idx]
+        val_paths = [file_paths[i] for i in val_idx]
+        val_labels = [labels[i] for i in val_idx]
+        test_loader = None
+    
+    # Create datasets and dataloaders
     train_ds = DefectDataset(train_paths, train_labels, transform=data_transforms['train'])
     val_ds   = DefectDataset(val_paths, val_labels, transform=data_transforms['val'])
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    return train_loader, val_loader
+    return train_loader, val_loader, test_loader
 
 
-# try k-fold cross-validation
 def get_all_data(data_dir):
     '''Load file paths and labels for all images in the dataset.'''
     classes = ['NoDefects', 'Defects']
@@ -90,6 +119,26 @@ def get_all_data(data_dir):
             files = glob.glob(os.path.join(folder, f'*.{ext}'))
             file_paths += files
             labels += [idx] * len(files)
+    return file_paths, labels
+
+
+def get_defect_dataset(data_dir):
+    file_paths, labels = [], []
+    # return filepaths and labels equal to 1
+    for ext in ('png', 'jpg', 'jpeg'):
+        files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
+        file_paths += files
+    labels = np.ones(len(file_paths))
+    return file_paths, labels
+
+
+def get_no_defect_dataset(data_dir):
+    file_paths, labels = [], []
+    # return filepaths and labels equal to 0
+    for ext in ('png', 'jpg', 'jpeg'):
+        files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
+        file_paths += files
+    labels = np.zeros(len(file_paths))
     return file_paths, labels
 
 
