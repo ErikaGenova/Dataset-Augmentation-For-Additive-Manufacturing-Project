@@ -20,6 +20,8 @@ from PIL import Image
 import glob
 import numpy as np
 from collections import Counter
+from sklearn.model_selection import train_test_split
+
 
 def get_class_weights(labels):
     '''Compute class weights for imbalanced dataset.'''
@@ -60,11 +62,13 @@ def train(args):
     print(f"Using device: {device}")
     print("\n Loading data...")
     # Get train and validation loaders with val_split
-    train_loader, val_loader = get_dataloaders(
+    train_loader, val_loader, test_loader = get_dataloaders(
         args.data_dir,
         batch_size=args.batch_size,
         val_split=args.val_split,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
+        test=args.test,
+        test_split=args.test_split
     )
     print("\nData loaded!")
     print(f"\nTrain samples: {len(train_loader.dataset)}, Validation samples: {len(val_loader.dataset)}")
@@ -129,8 +133,25 @@ def train(args):
 
     print('Training completed')
 
+    if args.test:
+        # Test set evaluation
+        print("\nEvaluating on the test set...")
+        test_running_loss, test_correct, test_total = 0.0, 0, 0
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                test_running_loss += loss.item() * images.size(0)
+                _, preds = torch.max(outputs, 1)
+                test_correct += (preds == labels).sum().item()
+                test_total += labels.size(0)
+        test_loss = test_running_loss / test_total
+        test_acc = test_correct / test_total
+        print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
 
-def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug=False):
+
+def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug=False, test_paths=None, test_labels=None):
     '''Train one fold of the K-Fold cross-validation.'''
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
@@ -257,6 +278,26 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         # Plot Validation Confusion matrix
         #plot_confusion_matrix(all_targets, all_preds, fold, epoch)
 
+    # Test set evaluation (if test set is provided)
+    if test_paths and test_labels:
+        print(f"\n[Fold {fold}] Evaluating on the test set...")
+        test_dataset = DefectDataset(test_paths, test_labels, transform=data_transforms['val'])
+        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+        test_running_loss, test_correct, test_total = 0.0, 0, 0
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                test_running_loss += loss.item() * images.size(0)
+                _, preds = torch.max(outputs, 1)
+                test_correct += (preds == labels).sum().item()
+                test_total += labels.size(0)
+        test_loss = test_running_loss / test_total
+        test_acc = test_correct / test_total
+        print(f"[Fold {fold}] Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+    
     return logs
 
 
@@ -266,6 +307,22 @@ def train_kfold(args):
 
     file_paths, labels = get_all_data(args.data_dir)
     labels = np.array(labels)
+
+    # Reserve a test set if args.test is True
+    if args.test:
+        train_val_idx, test_idx = train_test_split(
+            list(range(len(file_paths))),
+            test_size=args.test_split,
+            stratify=labels,
+            random_state=42
+        )
+        test_paths = [file_paths[i] for i in test_idx]
+        test_labels = [labels[i] for i in test_idx]
+        file_paths = [file_paths[i] for i in train_val_idx]
+        labels = [labels[i] for i in train_val_idx]
+    else:
+        test_paths, test_labels = None, None
+
     kf = StratifiedKFold(n_splits=args.k_folds, shuffle=True, random_state=42)
 
     all_logs, fold_metrics = [], []
@@ -278,7 +335,7 @@ def train_kfold(args):
 
     for fold, (train_idx, val_idx) in enumerate(kf.split(file_paths, labels), 1):
         print(f"\n===== Fold {fold} =====")
-        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug)
+        logs = train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, class_weights, aug, test_paths, test_labels)
         all_logs += [[fold] + row for row in logs]
         
         # Save metrics of the last epoch for this fold
@@ -303,7 +360,8 @@ def train_kfold(args):
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
     df.to_csv('kfold_logs.csv', index=False)
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
-
+    
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Train PBF defect detector")
     parser.add_argument('--data-dir', type=str, required=True)
@@ -316,9 +374,18 @@ if __name__ == '__main__':
     parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     parser.add_argument('--is_kfold', action='store_true', default=True, help='Use K-Fold cross-validation')
+    parser.add_argument('--test', action='store_true', help='Use test set for evaluation') # If this is true, a test set will be used 
+    parser.add_argument('--test-split', type=float, default=0.2, help='Test split ratio') # If this is true, a test set will be used
     parser.add_argument('--val-split', type=float, default=0.2, help='Validation split ratio')
     parser.add_argument('--output-dir', type=str, default='resnet_checkpoints', help='Directory to save checkpoints')  # New argument
     args = parser.parse_args()
+
+    """
+    To perform K-Fold cross-validation, set --is_kfold to True and specify the number of folds with --k-folds.
+    To perform a single train/val split, set --is_kfold to False and specify the validation split ratio with --val-split.
+
+    In both cases, to perform also testing, set --test to True and specify the test split ratio with --test-split.
+    """
 
     # Create the output directory if it doesn't exist
     if not os.path.exists(args.output_dir):
