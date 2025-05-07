@@ -19,10 +19,13 @@ if __name__ == '__main__':
     parser.add_argument('--scale_v', type=float, help='vertical resize factor for random samples', default=1)
     opt = parser.parse_args()
     opt = functions.post_config(opt)
+    
+    # Initialize the variables
     Gs = []
     Zs = []
     reals = []
     NoiseAmp = []
+     
     dir2save = functions.generate_dir2save(opt)
     if dir2save is None:
         print('task does not exist')
@@ -37,10 +40,15 @@ if __name__ == '__main__':
         except OSError:
             pass
         if opt.mode == 'random_samples':
+
+            # read the real image
             real = functions.read_image(opt)
             functions.adjust_scales2image(real, opt)
+
+            # load the trained pyramid
             Gs, Zs, reals, NoiseAmp = functions.load_trained_pyramid(opt, opt.dir_model)
             in_s = functions.generate_in2coarsest(reals,1,1,opt)
+            # generate random samples
             SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, gen_start_scale=opt.gen_start_scale)
 
         elif opt.mode == 'random_samples_arbitrary_sizes':

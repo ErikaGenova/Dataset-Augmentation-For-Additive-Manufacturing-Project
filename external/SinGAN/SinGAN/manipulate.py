@@ -108,34 +108,47 @@ def SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, in_s=None, scale_v=1, scale_h=
     #if torch.is_tensor(in_s) == False:
     if in_s is None:
         in_s = torch.full(reals[0].shape, 0, device=opt.device)
+    
     images_cur = []
+
+    # Iterate through the scales to generate progressively larger images
+    # Each scale has its own generator (G), optimazed noise tensor (Z_opt), and noise amplitude (noise_amp)
     for G,Z_opt,noise_amp in zip(Gs,Zs,NoiseAmp):
+
+        # Calculate the padding size based on the kernel size and number of layers
         pad1 = ((opt.ker_size-1)*opt.num_layer)/2
         m = nn.ZeroPad2d(int(pad1))
+        # Calculate the size of the noise for the current scale
         nzx = (Z_opt.shape[2]-pad1*2)*scale_v
         nzy = (Z_opt.shape[3]-pad1*2)*scale_h
 
+        # Save the generated images from the previous scale
         images_prev = images_cur
+        # Initialize the list to store the generated images for the current scale
         images_cur = []
-
+        
         for i in range(0,num_samples,1):
-            if n == 0:
+
+            # if it is the first scale, generate a random noise tensor
+            if n == 0: 
                 z_curr = functions.generate_noise([1,nzx,nzy], device=opt.device)
                 z_curr = z_curr.expand(1,opt.nc_z,z_curr.shape[2],z_curr.shape[3])
                 z_curr = m(z_curr)
             else:
+                # Generate a random noise tensor for the current scale
                 z_curr = functions.generate_noise([opt.nc_z,nzx,nzy], device=opt.device)
                 z_curr = m(z_curr)
 
+            # if it is the first scale, use the input image as the previous image
             if images_prev == []:
                 I_prev = m(in_s)
-                #I_prev = m(I_prev)
-                #I_prev = I_prev[:,:,0:z_curr.shape[2],0:z_curr.shape[3]]
-                #I_prev = functions.upsampling(I_prev,z_curr.shape[2],z_curr.shape[3])
             else:
+                # Resize the previous image to match the current scale
                 I_prev = images_prev[i]
                 I_prev = imresize(I_prev,1/opt.scale_factor, opt)
+
                 if opt.mode != "SR":
+                    # Resize the previous image to match the current scale
                     I_prev = I_prev[:, :, 0:round(scale_v * reals[n].shape[2]), 0:round(scale_h * reals[n].shape[3])]
                     I_prev = m(I_prev)
                     I_prev = I_prev[:,:,0:z_curr.shape[2],0:z_curr.shape[3]]
