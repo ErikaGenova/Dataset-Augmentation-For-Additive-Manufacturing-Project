@@ -294,6 +294,7 @@ def load_trained_pyramid(opt, mode_='train', dir=None):
         reals = torch.load('%s/reals.pth' % dir, weights_only=False)
         NoiseAmp = torch.load('%s/NoiseAmp.pth' % dir, weights_only=False)
     else:
+        print("%s does not exist" % dir)
         print('no appropriate trained model is exist, please train first')
     opt.mode = mode
     return Gs,Zs,reals,NoiseAmp
