@@ -1,3 +1,4 @@
+import traceback
 import torch 
 import torchvision
 import numpy as np
@@ -6,6 +7,7 @@ import torch.nn as nn
 import torch.nn. functional as F
 import torch.optim as optim
 import os
+from data_loader import get_dataloaders
 
 
 batch_size = 100
@@ -156,14 +158,22 @@ def test(epoch, model, test_loader):
 
 
 
-def load_data():
-    transform = torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor()])
-    train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
-                             transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
-                             transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
+def load_data(data_dir, batch_size, num_workers, image_size):
+    # transform = torchvision.transforms.Compose([
+    #                            torchvision.transforms.ToTensor()])
+    # train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
+    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    # test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
+    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    train_loader, test_loader = get_dataloaders(
+        data_dir=data_dir,
+        batch_size=batch_size,
+        val_split=0.2,  # Adjust validation split ratio if needed
+        num_workers=num_workers,
+        random_seed=42,  # Ensure reproducibility
+        image_size=image_size,
+    )
+
     return train_loader, test_loader
 
 def save_model(model, epoch):
@@ -196,7 +206,10 @@ if __name__ == "__main__":
         print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch,train_total, train_kld, train_loss))
         print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
-        save_model(model, i)
+        if i % 10 == 0 or i == max_epoch-1:
+            # Save the model every 10 epochs
+            print("Saving model...")
+            save_model(model, i)
         train_loss_list.append([train_total, train_kld, train_loss])
         test_loss_list.append([test_total, test_kld, test_loss])
         np.save("train_loss", np.array(train_loss_list))
