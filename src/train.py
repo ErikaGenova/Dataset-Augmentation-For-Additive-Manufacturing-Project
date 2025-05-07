@@ -283,7 +283,8 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         print(f"\n[Fold {fold}] Evaluating on the test set...")
         test_dataset = DefectDataset(test_paths, test_labels, transform=data_transforms['val'])
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
-
+        print(f"[Fold {fold}] Number of test images: {len(test_dataset)}")
+        
         test_running_loss, test_correct, test_total = 0.0, 0, 0
         with torch.no_grad():
             for images, labels in test_loader:
@@ -360,7 +361,7 @@ def train_kfold(args):
     df = pd.DataFrame(all_logs, columns=['fold', 'epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc', 'precision', 'recall', 'f1'])
     df.to_csv('kfold_logs.csv', index=False)
     print("\nK-Fold training completed. Metrics saved to 'kfold_logs.csv'.")
-    
+
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Train PBF defect detector")
