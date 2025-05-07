@@ -101,12 +101,10 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
                 - NoiseAmp: pth of the noise amplitude
         """
 
-        # Last scale, save the model and results
-        if scale_num == opt.stop_scale:
-            torch.save(Zs, '%s/Zs.pth' % (opt.out_))
-            torch.save(Gs, '%s/Gs.pth' % (opt.out_))
-            torch.save(reals, '%s/reals.pth' % (opt.out_))
-            torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
+        torch.save(Zs, '%s/Zs.pth' % (opt.out_))
+        torch.save(Gs, '%s/Gs.pth' % (opt.out_))
+        torch.save(reals, '%s/reals.pth' % (opt.out_))
+        torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
         
         # Update the scale number and the previous number of filters
         scale_num+=1
