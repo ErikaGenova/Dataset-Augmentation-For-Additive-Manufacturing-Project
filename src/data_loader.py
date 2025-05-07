@@ -12,18 +12,21 @@ import torch
 data_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ]),
     'train_aug': transforms.Compose([ # Augmentations for training
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomAdjustSharpness(sharpness_factor=2),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5839], std=[0.2074])
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        #transforms.Normalize(mean=[0.5839], std=[0.2074]) # mean and std computed from the dataset
     ])
 }
 
