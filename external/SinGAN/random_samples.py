@@ -25,7 +25,8 @@ if __name__ == '__main__':
     Zs = []
     reals = []
     NoiseAmp = []
-     
+    
+    # generate the directory to save the results
     dir2save = functions.generate_dir2save(opt)
     if dir2save is None:
         print('task does not exist')
