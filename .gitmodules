@@ -1,0 +1,6 @@
+[submodule "src/SinGAN"]
+	path = src/SinGAN
+	url = https://github.com/tamarott/SinGAN.git
+[submodule "SinGAN"]
+	path = SinGAN
+	url = https://github.com/tamarott/SinGAN.git
