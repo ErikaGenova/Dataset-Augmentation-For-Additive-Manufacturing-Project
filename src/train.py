@@ -156,7 +156,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     # Dataset and loader
     train_dataset = DefectDataset([file_paths[i] for i in train_idx],
                                    [labels[i] for i in train_idx],
-                                   transform=data_transforms['train'] )
+                                   transform=data_transforms['train_aug'] if aug else data_transforms['train'])
 
     val_dataset = DefectDataset([file_paths[i] for i in val_idx],
                                  [labels[i] for i in val_idx],
@@ -284,7 +284,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
         test_dataset = DefectDataset(test_paths, test_labels, transform=data_transforms['val'])
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
         print(f"[Fold {fold}] Number of test images: {len(test_dataset)}")
-        
+
         test_running_loss, test_correct, test_total = 0.0, 0, 0
         with torch.no_grad():
             for images, labels in test_loader:
