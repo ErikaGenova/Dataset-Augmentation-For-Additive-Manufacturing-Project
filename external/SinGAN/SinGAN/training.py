@@ -58,7 +58,8 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
         # Create a directory to save the model and results
         opt.out_ = functions.generate_dir2save(opt)
         opt.outf = '%s/%d' % (opt.out_,scale_num)
-        
+        print('out_: %s' % (opt.out_))
+        print("outf: %s" % (opt.outf))
         try:
             os.makedirs(opt.outf)
         except OSError:
@@ -100,7 +101,6 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
                 - reals: pth of the real images
                 - NoiseAmp: pth of the noise amplitude
         """
-        print('Saving models, directory: %s' % (opt.out_))
         torch.save(Zs, '%s/Zs.pth' % (opt.out_))
         torch.save(Gs, '%s/Gs.pth' % (opt.out_))
         torch.save(reals, '%s/reals.pth' % (opt.out_))
