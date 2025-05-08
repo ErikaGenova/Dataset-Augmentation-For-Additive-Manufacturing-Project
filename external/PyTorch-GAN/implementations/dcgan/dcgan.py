@@ -78,7 +78,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
-    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
+    parser.add_argument("--lr_g", type=float, default=0.0002, help="adam: learning rate for generator")
+    parser.add_argument("--lr_d", type=float, default=0.0002, help="adam: learning rate for discriminator")
     parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -135,8 +136,8 @@ def main():
     dataloader = DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
 
     # Optimizers
-    optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
-    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+    optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr_g, betas=(opt.b1, opt.b2))
+    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr_d, betas=(opt.b1, opt.b2))
 
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
