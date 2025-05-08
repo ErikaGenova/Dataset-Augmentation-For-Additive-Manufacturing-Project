@@ -222,8 +222,8 @@ if __name__ == "__main__":
         with torch.no_grad():
             model.eval()
             test_total, test_kld, test_loss = test(i, model, test_loader)
-        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch, train_total, train_kld, train_loss))
-        print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
+        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss: {}".format(i, max_epoch, train_total, train_kld, train_loss))
+        print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss: {}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
         if i % 10 == 0 or i == max_epoch - 1:
             print("Saving model...")

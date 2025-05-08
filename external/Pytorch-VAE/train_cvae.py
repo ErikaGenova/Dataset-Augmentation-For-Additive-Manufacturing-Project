@@ -104,14 +104,14 @@ def plot(epoch, pred, y,name='test_'):
     plt.close()
 
 
-def loss_function(x, pred, mu, logvar):
+def loss_function(x, pred, mu, logvar, kld_weight=1):
     recon_loss = F.mse_loss(pred, x, reduction='sum')
     kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
+    kld = kld * kld_weight
     return recon_loss, kld
 
 
-def train(epoch, model, train_loader, optim):
+def train(epoch, model, train_loader, optim, kld_weight=1):
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
@@ -124,7 +124,7 @@ def train(epoch, model, train_loader, optim):
             optim.zero_grad()   
             pred, mu, logvar = model(x.to(device),label.to(device))
             
-            recon_loss, kld = loss_function(x.to(device),pred, mu, logvar)
+            recon_loss, kld = loss_function(x.to(device),pred, mu, logvar, kld_weight=kld_weight)
             loss = recon_loss + kld
             loss.backward()
             optim.step()
@@ -152,7 +152,7 @@ def train(epoch, model, train_loader, optim):
     total_loss /= len(train_loader.dataset)
     return total_loss, kld_loss,reconstruction_loss
 
-def test(epoch, model, test_loader):
+def test(epoch, model, test_loader, kld_weight=1):
     reconstruction_loss = 0
     kld_loss = 0
     total_loss = 0
@@ -164,7 +164,7 @@ def test(epoch, model, test_loader):
                 label = torch.tensor(label)
 
                 pred, mu, logvar = model(x.to(device),label.to(device))
-                recon_loss, kld = loss_function(x.to(device),pred, mu, logvar)
+                recon_loss, kld = loss_function(x.to(device),pred, mu, logvar, kld_weight=kld_weight)
                 loss = recon_loss + kld
 
                 total_loss += loss.cpu().data.numpy()*x.shape[0]
@@ -234,6 +234,7 @@ if __name__ == "__main__":
     parser.add_argument("--generate", type=bool, default=True, help="Whether to generate images during testing.")
     parser.add_argument("--latent_size", type=int, default=128, help="Size of the latent space.")
     parser.add_argument("--image_size", type=int, default=512, help="Size of the input images.")
+    parser.add_argument("--kld_weight", type=float, default=1, help="Weight for the KLD loss term.")
     args = parser.parse_args()
 
     # Assign variables from parsed arguments
@@ -247,6 +248,7 @@ if __name__ == "__main__":
     data_dir = args.data_dir
     latent_size = args.latent_size
     image_size = args.image_size
+    kld_weight = args.kld_weight
 
     # Load data and initialize model
     train_loader, test_loader = load_data(data_dir, batch_size, num_workers, image_size)
@@ -268,19 +270,19 @@ if __name__ == "__main__":
     test_loss_list = []
     for i in range(load_epoch+1, max_epoch):
         model.train()
-        train_total, train_kld, train_loss = train(i, model, train_loader, optimizer)
+        train_total, train_kld, train_loss = train(i, model, train_loader, optimizer, kld_weight=kld_weight)
         with torch.no_grad():
             model.eval()
-            test_total, test_kld, test_loss = test(i, model, test_loader)
+            test_total, test_kld, test_loss = test(i, model, test_loader, kld_weight=kld_weight)
             if generate:
                 z = torch.randn(6, latent_size).to(device)  # Generate random latent vectors
                 y = torch.tensor([0, 1, 0, 1, 0, 1]).to(device)  # Alternate between class 0 and 1
                 generate_image(i, z, y, model)
             
-        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch,train_total, train_kld, train_loss))
-        print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
+        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss: {}".format(i, max_epoch,train_total, train_kld, train_loss))
+        print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss: {}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
-        if i % 10 == 0 or i == max_epoch-1:
+        if i % 50 == 0 or i == max_epoch-1:
             # Save the model every 10 epochs
             print("Saving model...")
             save_model(model, i)
