@@ -75,7 +75,7 @@ def train(args):
 
     # Build model
     print(f"\nUsing {args.backbone} as backbone")
-    model = build_model(backbone=args.backbone, pretrained=False)
+    model = build_model(backbone=args.backbone, pretrained=args.pretrained)
     model.to(device)
     print(f"\nModel loaded!")
     
@@ -168,7 +168,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     print(f"\n[Fold {fold}] Number of training images: {len(train_dataset)}")
     print(f"[Fold {fold}] Number of validation images: {len(val_dataset)}")
     # Model
-    model = build_model(backbone=args.backbone, pretrained=False)
+    model = build_model(backbone=args.backbone, pretrained=args.pretrained)
     model.to(device)
 
     # Freeze all layers except the last fully connected layer and layer4 to avoid overfitting
@@ -373,6 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
     parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
+    parser.add_argument('--pretrained', action='store_true', help='Use pretrained weights', default=False)
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     parser.add_argument('--is_kfold', type=str, default='True', help='Use K-Fold cross-validation')
     parser.add_argument('--test', type=str, default='True', help='Use test set for evaluation') # If this is true, a test set will be used 
