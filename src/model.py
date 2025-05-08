@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision.models as models
 
 
-def build_model(num_classes=2, backbone='resnet50', pretrained=True):
+def build_model(num_classes=2, backbone='resnet50', pretrained=False):
     '''Return a classification model with final layer adapted to num_classes.'''
     if backbone == 'resnet50':
         model = models.resnet50(weights=pretrained)
