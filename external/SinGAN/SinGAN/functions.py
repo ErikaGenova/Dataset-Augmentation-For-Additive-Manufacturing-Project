@@ -285,6 +285,7 @@ def load_trained_pyramid(opt, mode_='train', dir=None):
     if (mode == 'animation_train') | (mode == 'SR_train') | (mode == 'paint_train'):
         opt.mode = mode
 
+    print('opt.mode: %s' % opt.mode)
     if dir is None:
         dir = generate_dir2save(opt)
 
@@ -319,30 +320,19 @@ def generate_dir2save(opt):
     # Training Modes
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
         dir2save = 'SinGANTrainedModels/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
-    elif (opt.mode == 'animation_train') :
-        dir2save = 'SinGANTrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
-    elif (opt.mode == 'paint_train') :
-        dir2save = 'SinGANTrainedModels/%s/scale_factor=%f_paint/start_scale=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.paint_start_scale)
-    
+
     # Random Samples Modes
     elif opt.mode == 'random_samples':
         if opt.dir_model is not None:
             dir2save = 'SinGANRandomSamples/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
         else:
+            print('dir_model is None')
             dir2save = 'SinGANRandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
     elif opt.mode == 'random_samples_arbitrary_sizes':
         if opt.dir_model is not None:
             dir2save = 'SinGANRandomSamples_ArbitrerySizes/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
         else:
             dir2save = 'SinGANRandomSamples_ArbitrerySizes/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
-
-    # Super-Resolution  Mode
-    elif opt.mode == 'SR':
-        dir2save = '%s/SR/%s' % (opt.out, opt.sr_factor)
-    
-    # Harmonization Mode
-    elif opt.mode == 'harmonization':
-        dir2save = 'SinGANHarmonization/%s/%s_out' % (opt.input_name[:-4],opt.ref_name[:-4])
 
     return dir2save
 
