@@ -100,11 +100,11 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
                 - reals: pth of the real images
                 - NoiseAmp: pth of the noise amplitude
         """
-        if scale_num == opt.stop_scale:
-            torch.save(Zs, '%s/Zs.pth' % (opt.out_))
-            torch.save(Gs, '%s/Gs.pth' % (opt.out_))
-            torch.save(reals, '%s/reals.pth' % (opt.out_))
-            torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
+        print('Saving models, directory: %s' % (opt.out_))
+        torch.save(Zs, '%s/Zs.pth' % (opt.out_))
+        torch.save(Gs, '%s/Gs.pth' % (opt.out_))
+        torch.save(reals, '%s/reals.pth' % (opt.out_))
+        torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
         
         # Update the scale number and the previous number of filters
         scale_num+=1
