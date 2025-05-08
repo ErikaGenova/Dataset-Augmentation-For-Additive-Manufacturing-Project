@@ -7,19 +7,12 @@ import torch.nn as nn
 import torch.nn. functional as F
 import torch.optim as optim
 import os
+import argparse
 from data_loader import get_dataloaders
 
 
-batch_size = 100
-learning_rate = 1e-3
-max_epoch = 100
-device = torch.device("cuda")
-num_workers = 5
-load_epoch = -1
-
-
 class Model(nn.Module):
-    def __init__(self,latent_size=5):
+    def __init__(self,latent_size=128):
         super(Model,self).__init__()
         self.latent_size = latent_size
         
@@ -111,14 +104,14 @@ def train(epoch, model, train_loader, optim):
             total_loss += loss.cpu().data.numpy()*x.shape[0]
             reconstruction_loss += recon_loss.cpu().data.numpy()*x.shape[0]
             kld_loss += kld.cpu().data.numpy()*x.shape[0]
-            if i == 0:
-                print("Gradients")
-                for name,param in model.named_parameters():
-                    if "bias" in name:
-                        print(name,param.grad[0],end=" ")
-                    else:
-                        print(name,param.grad[0,0],end=" ")
-                    print()
+            # if i == 0:
+            #     print("Gradients")
+            #     for name,param in model.named_parameters():
+            #         if "bias" in name:
+            #             print(name,param.grad[0],end=" ")
+            #         else:
+            #             print(name,param.grad[0,0],end=" ")
+            #         print()
         except Exception as e:
             traceback.print_exe()
             torch.cuda.empty_cache()
@@ -185,39 +178,58 @@ def save_model(model, epoch):
 
 
 if __name__ == "__main__":
-    train_loader, test_loader = load_data()
-    print("dataloader created")
-    model = Model().to(device)
-    print("model created")
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Train a Variational Autoencoder (VAE).")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to the dataset directory.")
+    parser.add_argument("--batch_size", type=int, default=100, help="Batch size for training.")
+    parser.add_argument("--learning_rate", type=float, default=1e-3, help="Learning rate for the optimizer.")
+    parser.add_argument("--max_epoch", type=int, default=100, help="Number of epochs for training.")
+    parser.add_argument("--device", type=str, default="cuda", help="Device to use for training (e.g., 'cuda' or 'cpu').")
+    parser.add_argument("--num_workers", type=int, default=5, help="Number of workers for data loading.")
+    parser.add_argument("--load_epoch", type=int, default=-1, help="Epoch to load for checkpoint (-1 for no checkpoint).")
+    parser.add_argument("--latent_size", type=int, default=128, help="Size of the latent space.")
+    parser.add_argument("--image_size", type=int, default=512, help="Size of the input images.")
+    args = parser.parse_args()
+
+    # Assign variables from parsed arguments
+    batch_size = args.batch_size
+    learning_rate = args.learning_rate
+    max_epoch = args.max_epoch
+    device = torch.device(args.device)
+    num_workers = args.num_workers
+    load_epoch = args.load_epoch
+    latent_size = args.latent_size
+    image_size = args.image_size
+    data_dir = args.data_dir
+
+    # Load data and initialize model
+    train_loader, test_loader = load_data(data_dir, batch_size, num_workers, image_size)
+    print("Dataloader created.")
+    model = Model(latent_size).to(device)
+    print("Model created.")
     
     if load_epoch > 0:
-        model.load_state_dict(torch.load('./checkpoints/model_{}.pt'.format(load_epoch)), map_location=torch.device('cpu'))
+        model.load_state_dict(torch.load('./checkpoints/model_{}.pt'.format(load_epoch), map_location=torch.device('cpu')))
+        print("Model {} loaded.".format(load_epoch))
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.001)
 
     train_loss_list = []
     test_loss_list = []
-    for i in range(load_epoch+1, max_epoch):
+    for i in range(load_epoch + 1, max_epoch):
         model.train()
         train_total, train_kld, train_loss = train(i, model, train_loader, optimizer)
         with torch.no_grad():
             model.eval()
             test_total, test_kld, test_loss = test(i, model, test_loader)
-        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch,train_total, train_kld, train_loss))
+        print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss:{}".format(i, max_epoch, train_total, train_kld, train_loss))
         print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss:{}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
-        if i % 10 == 0 or i == max_epoch-1:
-            # Save the model every 10 epochs
+        if i % 10 == 0 or i == max_epoch - 1:
             print("Saving model...")
             save_model(model, i)
         train_loss_list.append([train_total, train_kld, train_loss])
         test_loss_list.append([test_total, test_kld, test_loss])
         np.save("train_loss", np.array(train_loss_list))
         np.save("test_loss", np.array(test_loss_list))
-
-
-    # i, (example_data, exaple_target) = next(enumerate(test_loader))
-    # print(example_data[0,0].shape)
-    # plt.figure(figsize=(5,5), dpi=100)
-    # plt.imsave("example.jpg", example_data[0,0], cmap='gray',  dpi=1000)
     
