@@ -75,7 +75,7 @@ def train(args):
 
     # Build model
     print(f"\nUsing {args.backbone} as backbone")
-    model = build_model(backbone=args.backbone, pretrained=True)
+    model = build_model(backbone=args.backbone, pretrained=False)
     model.to(device)
     print(f"\nModel loaded!")
     
@@ -168,7 +168,7 @@ def train_one_fold(train_idx, val_idx, file_paths, labels, device, args, fold, c
     print(f"\n[Fold {fold}] Number of training images: {len(train_dataset)}")
     print(f"[Fold {fold}] Number of validation images: {len(val_dataset)}")
     # Model
-    model = build_model(backbone=args.backbone, pretrained=True)
+    model = build_model(backbone=args.backbone, pretrained=False)
     model.to(device)
 
     # Freeze all layers except the last fully connected layer and layer4 to avoid overfitting
