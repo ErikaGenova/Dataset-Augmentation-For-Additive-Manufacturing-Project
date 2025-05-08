@@ -9,7 +9,6 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
     if backbone == 'resnet50':
         model = models.resnet50(weights=None if not pretrained else models.ResNet50_Weights.DEFAULT)
         print("Weights model: ", model.conv1.weight)
-        print("Weights pretrained model: ", models.ResNet50_Weights.DEFAULT)
 
         # Adapt first conv if grayscale input
         model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -18,7 +17,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
     elif backbone == 'resnet34':
         model = models.resnet34(weights=None if not pretrained else models.ResNet34_Weights.DEFAULT)
         print("Weights model: ", model.conv1.weight)
-        print("Weights pretrained model: ", models.ResNet34_Weights.DEFAULT)
+
         # Adapt first conv if grayscale input
         model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         in_features = model.fc.in_features
@@ -26,7 +25,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
     elif backbone == 'resnet18':
         model = models.resnet18(weights=None if not pretrained else models.ResNet18_Weights.DEFAULT)
         print("Weights model: ", model.conv1.weight)
-        print("Weights pretrained model: ", models.ResNet18_Weights.DEFAULT)
+
         # Adapt first conv if grayscale input
         model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         in_features = model.fc.in_features
