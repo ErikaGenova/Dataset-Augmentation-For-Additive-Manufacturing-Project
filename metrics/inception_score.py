@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     cifar = dset.CIFAR10(root='data/', download=True,
                              transform=transforms.Compose([
-                                 transforms.Scale(32),
+                                 transforms.Resize(32),
                                  transforms.ToTensor(),
                                  transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                              ])
