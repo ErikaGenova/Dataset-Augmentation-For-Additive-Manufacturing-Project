@@ -1,17 +1,58 @@
+import os
+import glob
 import torch
+import argparse
+from PIL import Image
+import numpy as np
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
-
 from torchvision.models.inception import inception_v3
-
-import numpy as np
 from scipy.stats import entropy
-import argparse
 
+
+"""
+  get_all_file_paths(data_dir) is a function that loads file paths for all images in the dataset
+"""
+# TODO: DA MODIFICARE IN BASE A COME SALVEREMO LE IMMAGINI GENERATE  
+def get_all_file_paths(data_dir):
+    '''Load file paths for all images in the dataset.'''
+    classes = ['NoDefects', 'Defects']
+    file_paths = []
+    for idx, cls in enumerate(classes):
+        folder = os.path.join(data_dir, cls)
+        for ext in ('png', 'jpg', 'jpeg'):
+            files = glob.glob(os.path.join(folder, f'*.{ext}'))
+            file_paths += files
+    return file_paths
+
+# Define the image transformation pipeline
+image_trasforms = transforms.Compose([
+    transforms.Resize((299, 299)),  # Resize images to 299x299
+    transforms.ToTensor(),          # Convert images to tensors
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize
+])
+
+# Dataset wrapper to ignore labels and return only images
+class IgnoreLabelDefectDataset(torch.utils.data.Dataset):
+  '''Custom dataset reading files and returning only images.'''
+  def __init__(self, file_paths, transform=None):
+      self.file_paths = file_paths
+      self.transform = transform
+
+  def __len__(self):
+      return len(self.file_paths)
+
+  def __getitem__(self, idx):
+      img_path = self.file_paths[idx]
+      image = Image.open(img_path).convert('L')  # grayscale
+      if self.transform:
+          image = self.transform(image)
+      return image
+  
 # Dataset wrapper to ignore labels and return only images
 class IgnoreLabelDataset(torch.utils.data.Dataset):
   """Dataset wrapper to ignore labels and return only images."""
@@ -26,12 +67,12 @@ class IgnoreLabelDataset(torch.utils.data.Dataset):
 
 """Computes the inception score of the generated images imgs
 
-    imgs -- Torch dataset of (3xHxW) numpy images normalized in the range [-1, 1]
+    imgs -- Torch dataset of (1xHxW) numpy images normalized in the range [-1, 1]
     cuda -- whether or not to run on GPU
     batch_size -- batch size for feeding into Inception v3
     splits -- number of splits
 """
-def inception_score(imgs, cuda=True, batch_size=32, resize=False, splits=1):
+def inception_score(imgs, cuda=True, batch_size=32, splits=1):
 
     # Number of images
     N = len(imgs)
@@ -55,18 +96,6 @@ def inception_score(imgs, cuda=True, batch_size=32, resize=False, splits=1):
     inception_model = inception_v3(pretrained=True, transform_input=False).type(dtype)
     inception_model.eval()  # Set the model to evaluation mode
 
-    # Define an upsampling layer to resize images to 299x299 if needed
-    up = nn.Upsample(size=(299, 299), mode='bilinear').type(dtype)
-
-    # Function to get predictions from the Inception model
-    def get_pred(x):
-        # Resize the input if required
-        if resize:
-            x = up(x)
-        # Pass the input through the Inception model and return softmax predictions
-        x = inception_model(x)
-        return F.softmax(x).data.cpu().numpy()
-
     # Initialize an array to store predictions
     preds = np.zeros((N, 1000))
 
@@ -76,8 +105,11 @@ def inception_score(imgs, cuda=True, batch_size=32, resize=False, splits=1):
         batchv = Variable(batch)  # Wrap batch in a Variable
         batch_size_i = batch.size()[0]  # Get the actual batch size
 
+        # Output of the Inception model 
+        x = inception_model(batchv)
+
         # Store predictions for the current batch
-        preds[i*batch_size:i*batch_size + batch_size_i] = get_pred(batchv)
+        preds[i*batch_size:i*batch_size + batch_size_i] = F.softmax(x).data.cpu().numpy()
 
     # Compute the mean KL divergence for each split
     split_scores = []
@@ -115,6 +147,12 @@ if __name__ == '__main__':
                              ])
     )
 
+    # get all file paths for the dataset
+    file_paths = get_all_file_paths(args.dir_images)
+
+    # Create a dataset with the file paths and transformations
+    dataset = IgnoreLabelDefectDataset(file_paths, transform=image_trasforms)
+
     print ("Calculating Inception Score...")
     # Compute and print the Inception Score for the dataset
-    print (inception_score(IgnoreLabelDataset(cifar), cuda=args.cuda, batch_size=args.batch_size, resize=True, splits=args.splits))
+    print(inception_score(dataset, cuda=args.cuda, batch_size=args.batch_size, splits=args.splits))
