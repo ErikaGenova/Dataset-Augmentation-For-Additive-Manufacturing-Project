@@ -72,6 +72,21 @@ class Discriminator(nn.Module):
         validity = self.adv_layer(out)
         return validity
 
+class R1(nn.Module):
+    def __init__(self, weight=10.0):
+        super(R1, self).__init__()
+        self.weight = weight
+
+    def forward(self, prediction_real: torch.Tensor, real_sample: torch.Tensor) -> torch.Tensor:
+        grad_real = torch.autograd.grad(
+            outputs=prediction_real.sum(),
+            inputs=real_sample,
+            create_graph=True
+        )[0]
+        reg_loss = self.weight * grad_real.pow(2).view(grad_real.shape[0], -1).sum(1).mean()
+        return reg_loss
+
+
 def main():
     os.makedirs("images", exist_ok=True)
 
@@ -89,6 +104,8 @@ def main():
     parser.add_argument("--sample_interval", type=int, default=400, help="interval between image sampling")
     parser.add_argument("--data_dir", type=str, default="/content/mla_project/images/original/Defects", help="path to dataset")
     parser.add_argument("--generate_defect", type=str, default="True", help="generate defect images")
+    parser.add_argument("--R1_regularization", type=str, default="False", help="use R1 regularization")
+    parser.add_argument("--R1_lambda", type=float, default=10.0, help="lambda for R1 regularization")
     opt = parser.parse_args()
     print(opt)
 
@@ -144,10 +161,17 @@ def main():
     # Directory to save models
     os.makedirs("saved_models", exist_ok=True)
 
+    # R1 regularization
+    if opt.R1_regularization == "True":
+        print("Using R1 regularization")
+        r1_regularizer = R1(weight=opt.R1_lambda)
+        if cuda:
+            r1_regularizer.cuda()
+
     # ----------
     #  Training
     # ----------
-
+    print("Starting training...")
     for epoch in range(opt.n_epochs):
         for i, (imgs, _) in enumerate(dataloader):
 
@@ -188,6 +212,11 @@ def main():
             real_loss = adversarial_loss(discriminator(real_imgs), valid)
             fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
             d_loss = (real_loss + fake_loss) / 2
+
+            # Add R1 penalty if enabled
+            if opt.R1_regularization == "True":
+                r1_loss = r1_regularizer(discriminator(real_imgs), real_imgs)
+                d_loss += r1_loss
 
             d_loss.backward()
             optimizer_D.step()
