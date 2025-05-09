@@ -88,7 +88,7 @@ def main():
     parser.add_argument("--channels", type=int, default=1, help="number of image channels")
     parser.add_argument("--sample_interval", type=int, default=400, help="interval between image sampling")
     parser.add_argument("--data_dir", type=str, default="/content/mla_project/images/original/Defects", help="path to dataset")
-    parser.add_argument("--generate_defect", action="store_true", help="generate defect images")
+    parser.add_argument("--generate_defect", type=str, default="True", help="generate defect images")
     opt = parser.parse_args()
     print(opt)
 
@@ -120,7 +120,7 @@ def main():
     discriminator.apply(weights_init_normal)
 
     # Configure data loader
-    if opt.generate_defect:
+    if opt.generate_defect == "True":
         print("Generating defect images...")
         file_paths, labels = get_defect_dataset(opt.data_dir)
     else:
