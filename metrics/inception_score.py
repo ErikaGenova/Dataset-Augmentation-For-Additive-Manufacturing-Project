@@ -14,8 +14,8 @@ import scipy.misc
 import numpy as np
 from six.moves import urllib
 import tensorflow as tf
-import data_ios
 import argparse
+import imageio
 
 MODEL_DIR = './imagenet'
 DATA_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
@@ -157,9 +157,7 @@ if __name__ == '__main__':
     if metric_mode == 'is':
         import tensorflow as tf
         from scores.inception_score_tf import get_inception_score
-        images = []
-        for ll in pred_list:
-            images.append(data_ios.imread(ll.strip(), args.resize))
+        images = [imageio.imread(ll.strip()) for ll in pred_list]
         with tf.device('/device:GPU:{}'.format(args.gpu_id)):
              final_score, stddev = get_inception_score(images)
         print(final_score, stddev)
