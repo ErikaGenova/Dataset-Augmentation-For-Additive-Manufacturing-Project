@@ -64,6 +64,10 @@ if __name__ == "__main__":
 
     # Load the model
     device = torch.device(args.device)
+    if args.model_type == "vae":
+        print("Using VAE model.")
+    elif args.model_type == "cvae":
+        print("Using CVAE model.")
     model = load_model(args.checkpoint, args.latent_size, args.image_size, device, model_type=args.model_type)
 
     # Generate images
