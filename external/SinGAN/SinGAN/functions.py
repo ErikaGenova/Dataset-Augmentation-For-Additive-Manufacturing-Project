@@ -326,7 +326,6 @@ def generate_dir2save(opt):
         if opt.dir_model is not None:
             dir2save = 'SinGANRandomSamples/%s/%s/%s' % (opt.class_, opt.input_name[:-4], opt.dir_model)
         else:
-            print('dir_model is None')
             dir2save = 'SinGANRandomSamples/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
     elif opt.mode == 'random_samples_arbitrary_sizes':
         if opt.dir_model is not None:
