@@ -107,6 +107,6 @@ if __name__ == '__main__':
 
     filenames = glob.glob(os.path.join(args.data_dir, '*.*'))
     images = [get_images(filename) for filename in filenames]
-    print(f'Trovate {len(images)} immagini nella directory {args.data_dir}.')
+    print(f'Founded {len(images)} images in {args.data_dir}')
     mean_score, std_score = get_inception_score(images, splits=args.splits)
     print(f'Inception Score: {mean_score} \u00b1 {std_score}')
