@@ -161,12 +161,14 @@ def main():
     # Directory to save models
     os.makedirs("saved_models", exist_ok=True)
 
+    """
     # R1 regularization
     if opt.R1_regularization == "True":
         print("Using R1 regularization")
         r1_regularizer = R1(weight=opt.R1_lambda)
         if cuda:
             r1_regularizer.cuda()
+    """
 
     # ----------
     #  Training
@@ -213,10 +215,12 @@ def main():
             fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
             d_loss = (real_loss + fake_loss) / 2
 
+            """
             # Add R1 penalty if enabled
             if opt.R1_regularization == "True":
                 r1_loss = r1_regularizer(discriminator(real_imgs), real_imgs)
                 d_loss += r1_loss
+            """
 
             d_loss.backward()
             optimizer_D.step()
