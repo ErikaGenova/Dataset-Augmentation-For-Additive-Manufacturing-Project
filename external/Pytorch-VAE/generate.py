@@ -43,7 +43,7 @@ def save_generated_images(images, labels, output_dir="generated_images", model_t
         for i, (image, label) in enumerate(zip(images, labels)):
             plt.imsave(f"{output_dir}/image_{i}_class_{label}.png", image[0], cmap="gray")
     else:
-        for i, (image, _) in enumerate(images):
+        for i, image in enumerate(images):
             plt.imsave(f"{output_dir}/image_{i}.png", image[0], cmap="gray")
     print(f"Generated images saved to {output_dir}")
 
