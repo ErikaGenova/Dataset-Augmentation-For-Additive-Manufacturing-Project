@@ -12,6 +12,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from torchvision.models.inception import inception_v3
 from scipy.stats import entropy
+from torchvision.models import Inception_V3_Weights
 
 
 """
@@ -31,10 +32,10 @@ def get_all_file_paths(data_dir):
 
 # Define the image transformation pipeline
 image_trasforms = transforms.Compose([
-    transforms.Grayscale(num_output_channels=3),  # Converti immagini in RGB
-    transforms.Resize((299, 299)),  # Ridimensiona le immagini a 299x299
-    transforms.ToTensor(),          # Converti le immagini in tensori
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalizza
+    transforms.Grayscale(num_output_channels=3),  # Convert to 3-channel grayscale
+    transforms.Resize((299, 299)),  # Resize to 299x299 for Inception v3
+    transforms.ToTensor(),          # Convert to tensor
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize to [-1, 1]
 ])
 
 # Dataset wrapper to ignore labels and return only images
@@ -94,7 +95,7 @@ def inception_score(imgs, cuda=True, batch_size=32, splits=1):
     dataloader = torch.utils.data.DataLoader(imgs, batch_size=batch_size)
 
     # Load the pretrained Inception v3 model
-    inception_model = inception_v3(pretrained=True, transform_input=False).type(dtype)
+    inception_model = inception_v3(weights=Inception_V3_Weights.DEFAULT, transform_input=False).type(dtype)
     inception_model.eval()  # Set the model to evaluation mode
 
     # Initialize an array to store predictions
@@ -110,7 +111,7 @@ def inception_score(imgs, cuda=True, batch_size=32, splits=1):
         x = inception_model(batchv)
 
         # Store predictions for the current batch
-        preds[i*batch_size:i*batch_size + batch_size_i] = F.softmax(x).data.cpu().numpy()
+        preds[i*batch_size:i*batch_size + batch_size_i] = F.softmax(x, dim=1).data.cpu().numpy()
 
     # Compute the mean KL divergence for each split
     split_scores = []
@@ -155,5 +156,9 @@ if __name__ == '__main__':
     dataset = IgnoreLabelDefectDataset(file_paths, transform=image_trasforms)
 
     print ("Calculating Inception Score...")
-    # Compute and print the Inception Score for the dataset
-    print(inception_score(dataset, cuda=args.cuda, batch_size=args.batch_size, splits=args.splits))
+
+    # Perform Inception Score calculation
+    mean, std = inception_score(dataset, cuda=args.cuda, batch_size=args.batch_size, splits=args.splits)
+    # Print the results
+    print(f"Inception Score: {mean:.4f} ± {std:.4f}")
+  
