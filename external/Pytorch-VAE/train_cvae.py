@@ -12,9 +12,9 @@ import argparse
 from data_loader import get_dataloaders
 
 
-class Model(nn.Module):
+class Cvae(nn.Module):
     def __init__(self, latent_size=128, image_size=512, num_classes=2):
-        super(Model,self).__init__()
+        super(Cvae,self).__init__()
         self.latent_size = latent_size
         self.num_classes = num_classes
 
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     print("Train dataset size: ", len(train_loader.dataset))
     print("Test dataset size: ", len(test_loader.dataset))
     
-    model = Model(latent_size, image_size).to(device)
+    model = Cvae(latent_size, image_size).to(device)
     print("Model created.")
     
     if load_epoch > 0:

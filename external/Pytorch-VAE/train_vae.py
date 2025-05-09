@@ -11,42 +11,49 @@ import argparse
 from data_loader import get_dataloaders
 
 
-class Model(nn.Module):
-    def __init__(self,latent_size=128):
-        super(Model,self).__init__()
+class Vae(nn.Module):
+    def __init__(self, latent_size=128, image_size=512):
+        super(Vae, self).__init__()
         self.latent_size = latent_size
-        
+
         # For encode
         self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.linear1 = nn.Linear(4*4*32,300)
+
+        # Dynamically compute the flattened size after convolutions
+        conv1_output_size = compute_conv_output_size(image_size, kernel_size=5, stride=2)
+        conv2_output_size = compute_conv_output_size(conv1_output_size, kernel_size=5, stride=2)
+        self.flattened_size = conv2_output_size * conv2_output_size * 32
+
+        self.linear1 = nn.Linear(self.flattened_size, 300)
         self.mu = nn.Linear(300, self.latent_size)
         self.logvar = nn.Linear(300, self.latent_size)
 
         # For decoder
         self.linear2 = nn.Linear(self.latent_size, 300)
-        self.linear3 = nn.Linear(300,4*4*32)
-        self.conv3 = nn.ConvTranspose2d(32, 16, kernel_size=5,stride=2)
+        self.linear3 = nn.Linear(300, self.flattened_size)
+        self.conv3 = nn.ConvTranspose2d(32, 16, kernel_size=5, stride=2)
         self.conv4 = nn.ConvTranspose2d(16, 1, kernel_size=5, stride=2)
         self.conv5 = nn.ConvTranspose2d(1, 1, kernel_size=4)
 
-    def encoder(self,x):
+    def encoder(self, x):
         t = F.relu(self.conv1(x))
         t = F.relu(self.conv2(t))
         t = t.reshape((x.shape[0], -1))
-        
         t = F.relu(self.linear1(t))
         mu = self.mu(t)
         logvar = self.logvar(t)
         return mu, logvar
-    
+
     def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
+        std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std).to(device)
-        return eps*std + mu
-    
+        return eps * std + mu
+
     def unFlatten(self, x):
-        return x.reshape((x.shape[0], 32, 4, 4))
+        # Compute the height and width dynamically
+        conv2_output_size = int((self.flattened_size // 32) ** 0.5)
+        return x.reshape((x.shape[0], 32, conv2_output_size, conv2_output_size))
 
     def decoder(self, z):
         t = F.relu(self.linear2(z))
@@ -57,12 +64,15 @@ class Model(nn.Module):
         t = F.relu(self.conv5(t))
         return t
 
-
     def forward(self, x, y):
         mu, logvar = self.encoder(x)
-        z = self.reparameterize(mu,logvar)
+        z = self.reparameterize(mu, logvar)
         pred = self.decoder(z)
         return pred, mu, logvar
+
+
+def compute_conv_output_size(input_size, kernel_size, stride, padding=0):
+    return (input_size - kernel_size + 2 * padding) // stride + 1
 
 
 def plot(epoch, pred, y):
@@ -201,11 +211,12 @@ if __name__ == "__main__":
     latent_size = args.latent_size
     image_size = args.image_size
     data_dir = args.data_dir
+    image_size
 
     # Load data and initialize model
     train_loader, test_loader = load_data(data_dir, batch_size, num_workers, image_size)
     print("Dataloader created.")
-    model = Model(latent_size).to(device)
+    model = Vae(latent_size, image_size).to(device)
     print("Model created.")
     
     if load_epoch > 0:
@@ -225,7 +236,7 @@ if __name__ == "__main__":
         print("Epoch: {}/{} Train loss: {}, Train KLD: {}, Train Reconstruction Loss: {}".format(i, max_epoch, train_total, train_kld, train_loss))
         print("Epoch: {}/{} Test loss: {}, Test KLD: {}, Test Reconstruction Loss: {}".format(i, max_epoch, test_loss, test_kld, test_loss))
 
-        if i % 10 == 0 or i == max_epoch - 1:
+        if i % 50 == 0 or i == max_epoch - 1:
             print("Saving model...")
             save_model(model, i)
         train_loss_list.append([train_total, train_kld, train_loss])
