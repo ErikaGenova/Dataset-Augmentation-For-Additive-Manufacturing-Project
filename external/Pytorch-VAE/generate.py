@@ -7,7 +7,7 @@ from train_vae import Vae
 def load_model(checkpoint_path, latent_size, image_size, device, model_type="cvae"):
     """Load the model from a checkpoint."""
     if model_type == "vae":
-        model = Vae(latent_size=latent_size).to(device)
+        model = Vae(latent_size=latent_size, image_size=image_size).to(device)
     elif model_type == "cvae":
         model = Cvae(latent_size=latent_size, image_size=image_size).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
