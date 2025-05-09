@@ -31,9 +31,10 @@ def get_all_file_paths(data_dir):
 
 # Define the image transformation pipeline
 image_trasforms = transforms.Compose([
-    transforms.Resize((299, 299)),  # Resize images to 299x299
-    transforms.ToTensor(),          # Convert images to tensors
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize
+    transforms.Grayscale(num_output_channels=3),  # Converti immagini in RGB
+    transforms.Resize((299, 299)),  # Ridimensiona le immagini a 299x299
+    transforms.ToTensor(),          # Converti le immagini in tensori
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalizza
 ])
 
 # Dataset wrapper to ignore labels and return only images
