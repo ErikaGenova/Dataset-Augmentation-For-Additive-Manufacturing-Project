@@ -373,7 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--checkpoint', type=str, default='best_model')
     parser.add_argument('--aug', type=str, default='False', help='Use data augmentation')
-    parser.add_argument('--pretrained', action='store_true', help='Use pretrained weights', default=False)
+    parser.add_argument('--pretrained', action=str, help='Use pretrained weights', default="True")
     parser.add_argument('--k-folds', type=int, default=5, help='Number of cross-validation folds')
     parser.add_argument('--is_kfold', type=str, default='True', help='Use K-Fold cross-validation')
     parser.add_argument('--test', type=str, default='True', help='Use test set for evaluation') # If this is true, a test set will be used 

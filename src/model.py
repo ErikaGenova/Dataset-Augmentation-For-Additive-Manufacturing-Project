@@ -7,7 +7,7 @@ import torchvision.models as models
 def build_model(num_classes=2, backbone='resnet50', pretrained=False):
     '''Return a classification model with final layer adapted to num_classes.'''
     if backbone == 'resnet50':
-        if pretrained == False:
+        if pretrained == "False":
             print("No pretrained weights")
             model = models.resnet50(weights=None)
         else:
@@ -19,7 +19,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
         in_features = model.fc.in_features
         model.fc = nn.Linear(in_features, num_classes)
     elif backbone == 'resnet34':
-        if pretrained == False:
+        if pretrained == "False":
             print("No pretrained weights")
             model = models.resnet34(weights=None)
         else:
@@ -30,7 +30,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
         in_features = model.fc.in_features
         model.fc = nn.Linear(in_features, num_classes)
     elif backbone == 'resnet18':
-        if pretrained == False:
+        if pretrained == "False":
             print("No pretrained weights")
             model = models.resnet18(weights=None)
         else:
