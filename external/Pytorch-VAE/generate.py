@@ -73,7 +73,4 @@ if __name__ == "__main__":
     images, labels = generate_images(model, args.latent_size, args.num_images, device, model_type=args.model_type)
 
     # Save images
-    if args.model_type == "cvae":
-        save_generated_images(images, labels, args.output_dir)
-    else:
-        save_generated_images(images, [None] * len(images), args.output_dir)
+    save_generated_images(images, labels, args.output_dir, model_type=args.model_type)
