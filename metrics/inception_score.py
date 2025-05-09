@@ -72,7 +72,7 @@ def _init_inception():
   tarfile.open(filepath, 'r:gz').extractall(MODEL_DIR)
   with tf.io.gfile.GFile(os.path.join(
       MODEL_DIR, 'classify_image_graph_def.pb'), 'rb') as f:
-    graph_def = tf.GraphDef()
+    graph_def = tf.compat.v1.GraphDef()
     graph_def.ParseFromString(f.read())
     _ = tf.import_graph_def(graph_def, name='')
   # Works with an arbitrary minibatch size.
