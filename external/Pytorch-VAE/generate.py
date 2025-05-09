@@ -35,17 +35,16 @@ def generate_images(model, latent_size, num_images, device, model_type="cvae"):
             generated_images = model.decoder(z)
         return generated_images.cpu().numpy(), None
 
-def save_generated_images(images, labels, output_dir="generated_images"):
+def save_generated_images(images, labels, output_dir="generated_images", model_type="cvae"):
     """Save generated images to disk."""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    for i, image in enumerate(images):
-        if labels is not None:
-            label = labels[i]
-            filename = f"{output_dir}/image_{i}_class_{label}.png"
-        else:
-            filename = f"{output_dir}/image_{i}.png"
-        plt.imsave(filename, image[0], cmap="gray")
+    if model_type == "cvae":
+        for i, (image, label) in enumerate(zip(images, labels)):
+            plt.imsave(f"{output_dir}/image_{i}_class_{label}.png", image[0], cmap="gray")
+    else:
+        for i, (image, _) in enumerate(images):
+            plt.imsave(f"{output_dir}/image_{i}.png", image[0], cmap="gray")
     print(f"Generated images saved to {output_dir}")
 
 if __name__ == "__main__":
