@@ -79,7 +79,7 @@ def plot(epoch, pred, y):
     if not os.path.isdir('./images'):
         os.mkdir('./images')
     fig = plt.figure(figsize=(16,16))
-    for i in range(6):
+    for i in range(4):
         ax = fig.add_subplot(3,2,i+1)
         ax.imshow(pred[i,0],cmap='gray')
         ax.axis('off')
