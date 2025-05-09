@@ -24,7 +24,7 @@ def build_model(num_classes=2, backbone='resnet50', pretrained=False):
             model = models.resnet34(weights=None)
         else:
             print("Pretrained weights")
-            model = models.resnet50(weights=models.ResNet34_Weights.DEFAULT)
+            model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
         # Adapt first conv if grayscale input
         model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         in_features = model.fc.in_features
