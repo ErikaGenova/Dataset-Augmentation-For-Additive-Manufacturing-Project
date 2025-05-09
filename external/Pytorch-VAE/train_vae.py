@@ -195,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=1e-3, help="Learning rate for the optimizer.")
     parser.add_argument("--max_epoch", type=int, default=100, help="Number of epochs for training.")
     parser.add_argument("--device", type=str, default="cuda", help="Device to use for training (e.g., 'cuda' or 'cpu').")
-    parser.add_argument("--num_workers", type=int, default=5, help="Number of workers for data loading.")
+    parser.add_argument("--num_workers", type=int, default=2, help="Number of workers for data loading.")
     parser.add_argument("--load_epoch", type=int, default=-1, help="Epoch to load for checkpoint (-1 for no checkpoint).")
     parser.add_argument("--latent_size", type=int, default=128, help="Size of the latent space.")
     parser.add_argument("--image_size", type=int, default=512, help="Size of the input images.")
