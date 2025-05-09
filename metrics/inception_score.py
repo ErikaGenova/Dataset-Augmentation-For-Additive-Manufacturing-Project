@@ -15,6 +15,7 @@ import scipy.misc
 import math
 import sys
 import argparse
+import imageio
 
 MODEL_DIR = '/tmp/imagenet'
 DATA_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
@@ -103,7 +104,7 @@ if __name__ == '__main__':
         _init_inception()
 
     def get_images(filename):
-        return scipy.misc.imread(filename)
+        return imageio.imread(filename)
 
     filenames = glob.glob(os.path.join(args.data_dir, '*.*'))
     images = [get_images(filename) for filename in filenames]
