@@ -82,7 +82,7 @@ def _init_inception():
     for op_idx, op in enumerate(ops):
         for o in op.outputs:
             shape = o.get_shape()
-            shape = [s.value for s in shape]
+            shape = [s.value if s is not None else None for s in shape]
             new_shape = []
             for j, s in enumerate(shape):
                 if s == 1 and j == 0:
