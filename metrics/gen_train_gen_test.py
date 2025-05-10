@@ -16,7 +16,10 @@ import torch.optim as optim
 import pandas as pd
 # import build_model
 from src.model import build_model 
+from sklearn.model_selection import train_test_split
 
+
+# Dataset for the synthetic data by CVAE
 class CvaeSyntheticDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
     def __init__(self, file_paths, labels, transform=None):
@@ -29,10 +32,11 @@ class CvaeSyntheticDataset(Dataset):
 
     def __getitem__(self, idx):
         # TODO: vedi come come sono salvati i dati dalle cvae e fai di conseguenza
-        ...
+        return
 
 # class GANSyntheticDataset(Dataset): ...
 
+# Dataset for the original data
 class OriginalDefectDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
     def __init__(self, file_paths, labels, transform=None):
@@ -51,71 +55,132 @@ class OriginalDefectDataset(Dataset):
             image = self.transform(image)
         return image, label
 
-"""
-# Dataset for the original data
-class GEN_Train_DefectDataset(Dataset):
-    '''Custom dataset reading files and labels from lists.'''
-    def __init__(self, file_paths, labels, transform=None):
-        self.file_paths = file_paths
-        self.labels = labels
-        self.transform = transform
 
-    def __len__(self):
-        return len(self.file_paths)
+# get transformations to have size 
+def get_transformations(args):
+    # Estensioni dei file immagine da considerare
+    image_extensions = ('*.png', '*.jpg', '*.jpeg')
 
-    def __getitem__(self, idx):
-        img_path = self.file_paths[idx]
-        label = self.labels[idx]
-        image = Image.open(img_path).convert('L')  # grayscale
-        if self.transform:
-            image = self.transform(image)
-        return image, label
+    # Lista di tutti i file immagine
+    all_images = []
+    for ext in image_extensions:
+        all_images.extend(glob.glob(os.path.join(args.dir_generated, ext)))
 
-# Dataset for the generated images
-class GEN_Test_DefectDataset(Dataset):
-    '''Custom dataset reading files and labels from lists.'''
-    def __init__(self, file_paths, labels, transform=None):
-        self.file_paths = file_paths
-        self.labels = labels
-        self.transform = transform
+    # Verifica se sono presenti immagini
+    if not all_images:
+        raise FileNotFoundError(f"Nessuna immagine trovata in {args.dir_generated}")
 
-    def __len__(self):
-        return len(self.file_paths)
+    # Prendi il primo file immagine
+    first_image_path = all_images[0]
 
-    def __getitem__(self, idx):
-        img_path = self.file_paths[idx]
-        label = self.labels[idx]
-        image = Image.open(img_path).convert('L')  # grayscale
-        if self.transform:
-            image = self.transform(image)
-        return image, label
+    # Ottieni le dimensioni (larghezza, altezza) dell'immagine
+    with Image.open(first_image_path) as img:
+        original_size = img.size  # (width, height)
 
+    # Transforms for training and validation
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.Resize(original_size[::-1]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(original_size[::-1]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
+        ])
+    }
 
-def GEN_train(args):
-    # Set up the data type for GPU or CPU
-    if args.cuda:
-        dtype = torch.cuda.FloatTensor
+    return data_transforms
+
+# get train and val dataloaders
+def get_train_val_dataloaders(args):
+    train_loader = None
+    val_loader = None
+
+    # In this case, the training and validation dataloaders are created from the original dataset
+    if args.mode == "GEN_train":
+        # get transformations for the images
+        data_transforms = get_transformations(args)
+
+        # path of the original dataset
+        data_dir = os.path.join(args.base_dir, "images", "original")
+
+        # parameters
+        batch_size = args.batch_size
+        val_split = args.val_split
+        num_workers = args.num_workers
+        random_seed = args.random_seed
+
+        classes = ['NoDefects', 'Defects']
+        file_paths, labels = [], []
+        for idx, cls in enumerate(classes):
+            folder = os.path.join(data_dir, cls)
+            for ext in ('png', 'jpg', 'jpeg'):
+                files = glob.glob(os.path.join(folder, f'*.{ext}'))
+                file_paths += files
+                labels += [idx] * len(files)
+
+        # train/val split stratified by label
+        train_idx, val_idx = train_test_split(
+            list(range(len(file_paths))),
+            test_size=val_split,
+            stratify=labels,
+            random_state=random_seed
+        )
+
+        train_paths = [file_paths[i] for i in train_idx]
+        train_labels = [labels[i] for i in train_idx]
+        val_paths = [file_paths[i] for i in val_idx]
+        val_labels = [labels[i] for i in val_idx]
+
+        # Create datasets and dataloaders
+        train_ds = OriginalDefectDataset(train_paths, train_labels, transform=data_transforms['train'])
+        val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=data_transforms['val'])
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+        val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    
+    # In this case, the training and validation dataloaders are created from the generated dataset based on the model and experiment
     else:
-        if torch.cuda.is_available():
-            print("WARNING: You have a CUDA device, so you should probably set cuda=True")
-        dtype = torch.FloatTensor
+        return None, None
+    
+    
+    return train_loader, val_loader
 
-    return
+# get only test dataloader
+def get_test_dataloader(args):
+    test_loader = None
 
-
-def GEN_test(args):
-    # Set up the data type for GPU or CPU
-    if args.cuda:
-        dtype = torch.cuda.FloatTensor
+    # in this case the train dataloader is created from genereted dataset based on args.model
+    if args.mode == "GEN_train":
+        return None
+    # in this case the train dataloader is created from original dataset
     else:
-        if torch.cuda.is_available():
-            print("WARNING: You have a CUDA device, so you should probably set cuda=True")
-        dtype = torch.FloatTensor
+        # get transformations for the images
+        data_transforms = get_transformations(args)
 
+        # path of the original dataset
+        data_dir = os.path.join(args.base_dir, "images", "original")
 
-    return
-"""
+        # parameters
+        batch_size = args.batch_size
+        num_workers = args.num_workers
 
+        classes = ['NoDefects', 'Defects']
+        test_paths, test_labels = [], []
+        for idx, cls in enumerate(classes):
+            folder = os.path.join(data_dir, cls)
+            for ext in ('png', 'jpg', 'jpeg'):
+                files = glob.glob(os.path.join(folder, f'*.{ext}'))
+                test_paths += files
+                test_labels += [idx] * len(files)
+        
+        test_ds = OriginalDefectDataset(test_paths, test_labels, transform=data_transforms['val'])
+        test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    return test_loader
+
+# training function 
 def train(train_loader, val_loader, args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
@@ -178,11 +243,15 @@ def train(train_loader, val_loader, args):
     # Save logs to CSV
     df = pd.DataFrame(logs, columns=['epoch', 'train_loss', 'val_loss', 'train_acc', 'val_acc'])
     df.to_csv('logs.csv', index=False)
+    
+    # save the model in the args
+    args.model = model
 
     print('Training completed')
+    
 
-
-def test(model, test_loader, cuda):
+# test function
+def test(model, test_loader):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
@@ -203,56 +272,42 @@ def test(model, test_loader, cuda):
     test_acc = correct / total
     print(f"Test Accuracy: {test_acc:.4f}")
 
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GEN train or GEN test")
+
+    parser.add_argument("--cuda", action='store_true', help='Use CUDA for computation', default=False)
+    parser.add_argument("--base_dir", type=str, help="Base directory of the projects", default="/content/mla_project/")
     parser.add_argument("--mode", type=str, help="GEN_train or GEN_test", required=True)
     parser.add_argument("--model", type=str, help="Model name", required=True)
-    parser.add_argument("--cuda", action='store_true', help='Use CUDA for computation', default=False)
+    parser.add_argument("--experiment", type=str, help="Experiment", required=True)
+    parser.add_argument("--backbone", type=str, help="Backbone model", default="resnet50")
+    parser.add_argument("--pretrained", action="store_true", help="Use pretrained model", default=False)
+    parser.add_argument("--batch_size", type=int, help="Batch size", default=16)
+    parser.add_argument("--val_split", type=float, help="Validation split", default=0.2)
+    parser.add_argument("--num_workers", type=int, help="Number of workers", default=4)
+    parser.add_argument("--random_seed", type=int, help="Random seed", default=42)
+
 
     args = parser.parse_args()
 
     if args.mode == "GEN_train":
-        # Training with the original dataset and test on the synthetic dataset
+
+        # path of the generated data
+        args.dir_generated = os.path.join(args.base_dir, "images", "augumented", args.model, args.experiment)
+
+        # get dataloaders
+        train_loader, val_loader = get_train_val_dataloaders(args)
+
+        # Training with the original 
+        train(train_loader, val_loader, args)
+
+        test_loader = get_test_dataloader(args) # Get test data loader from CvaeSyntheticDataset
         
-        # Get training and validation data loaders from OriginalDefectDataset
-
-        """
-        classes = ['NoDefects', 'Defects']
-        file_paths, labels = [], []
-        for idx, cls in enumerate(classes):
-            folder = os.path.join(data_dir, cls)
-            for ext in ('png', 'jpg', 'jpeg'):
-                files = glob.glob(os.path.join(folder, f'*.{ext}'))
-                file_paths += files
-                labels += [idx] * len(files)
-
-        
-        # train/val split stratified by label
-        train_idx, val_idx = train_test_split(
-            list(range(len(file_paths))),
-            test_size=val_split,
-            stratify=labels,
-            random_state=random_seed
-        )
-
-        train_paths = [file_paths[i] for i in train_idx]
-        train_labels = [labels[i] for i in train_idx]
-        val_paths = [file_paths[i] for i in val_idx]
-        val_labels = [labels[i] for i in val_idx]
-        
-        # Create datasets and dataloaders
-        train_ds = OriginalDefectDataset(train_paths, train_labels, transform=data_transforms['train'])
-        val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=data_transforms['val'])
-
-        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-        val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-        """
-        train_loader = None
-        val_loader = None
-        train(train_loader, val_loader, args.model, args.cuda)
-
-        test_loader = None # Get test data loader from CvaeSyntheticDataset
-        test(args.model, test_loader, args.cuda)
+        # test with the augumented 
+        test(args.model, test_loader)
 
 
     elif args.mode == "GEN_test": 
