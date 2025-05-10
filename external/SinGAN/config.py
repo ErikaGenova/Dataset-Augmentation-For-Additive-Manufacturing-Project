@@ -13,7 +13,7 @@ def get_arguments():
     parser.add_argument('--manualSeed', type=int, help='manual seed')
     parser.add_argument('--nc_z',type=int,help='noise # channels',default=1)
     parser.add_argument('--nc_im',type=int,help='image # channels',default=1)
-    parser.add_argument('--out',help='output folder',default='Output')
+    parser.add_argument('--out',help='output folder',default=None)
         
     #networks hyper parameters:
     parser.add_argument('--nfc', type=int, default=32)
