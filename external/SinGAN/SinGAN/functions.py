@@ -42,15 +42,6 @@ def norm(x):
     out = (x -0.5) *2
     return out.clamp(-1, 1)
 
-#def denorm2image(I1,I2):
-#    out = (I1-I1.mean())/(I1.max()-I1.min())
-#    out = out*(I2.max()-I2.min())+I2.mean()
-#    return out#.clamp(I2.min(), I2.max())
-
-#def norm2image(I1,I2):
-#    out = (I1-I2.mean())*2
-#    return out#.clamp(I2.min(), I2.max())
-
 """
     The convert_image_np(inp) function converts a PyTorch tensor to a NumPy array,
     denormalizing it and adjusting the shape for visualization.
@@ -111,26 +102,6 @@ def generate_noise(size, num_samp=1, device='cuda', type='gaussian', scale=1):
         noise = torch.randn(num_samp, size[0], size[1], size[2], device=device)
     return noise
 
-def plot_learning_curves(G_loss, D_loss, epochs, label1, label2, name):
-    fig,ax = plt.subplots(1)
-    n = np.arange(0,epochs)
-    plt.plot(n,G_loss,n,D_loss)
-    #plt.title('loss')
-    #plt.ylabel('loss')
-    plt.xlabel('epochs')
-    plt.legend([label1,label2],loc='upper right')
-    plt.savefig('%s.png' % name)
-    plt.close(fig)
-
-def plot_learning_curve(loss,epochs,name):
-    fig,ax = plt.subplots(1)
-    n = np.arange(0,epochs)
-    plt.plot(n,loss)
-    plt.ylabel('loss')
-    plt.xlabel('epochs')
-    plt.savefig('%s.png' % name)
-    plt.close(fig)
-
 def upsampling(im, sx, sy):
     m = nn.Upsample(size=[round(sx),round(sy)],mode='bilinear',align_corners=True)
     return m(im)
@@ -173,16 +144,6 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     #LAMBDA = 1
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
     return gradient_penalty
-
-"""
-def read_image(opt):
-    x = img.imread('%s/%s' % (opt.input_dir, opt.input_name))
-    if x.ndim == 2:
-        x = x[:, :, None]  # Se è in bianco e nero, aggiungi il canale colore
-    x = np2torch(x, opt)
-    x = x[:, 0:3, :, :]
-    return x
-"""
 
 def read_image_dir(dir,opt):
     x = img.imread('%s' % (dir))
@@ -247,19 +208,6 @@ def adjust_scales2image(real_,opt):
     #opt.scale_factor = math.pow(opt.min_size / (real.shape[2]), 1 / (opt.stop_scale))
     opt.scale_factor = math.pow(opt.min_size/(min(real.shape[2],real.shape[3])),1/(opt.stop_scale))
     scale2stop = math.ceil(math.log(min([opt.max_size, max([real_.shape[2], real_.shape[3]])]) / max([real_.shape[2], real_.shape[3]]),opt.scale_factor_init))
-    opt.stop_scale = opt.num_scales - scale2stop
-    return real
-
-def adjust_scales2image_SR(real_,opt):
-    opt.min_size = 18
-    opt.num_scales = int((math.log(opt.min_size / min(real_.shape[2], real_.shape[3]), opt.scale_factor_init))) + 1
-    scale2stop = int(math.log(min(opt.max_size , max(real_.shape[2], real_.shape[3])) / max(real_.shape[0], real_.shape[3]), opt.scale_factor_init))
-    opt.stop_scale = opt.num_scales - scale2stop
-    opt.scale1 = min(opt.max_size / max([real_.shape[2], real_.shape[3]]), 1)  # min(250/max([real_.shape[0],real_.shape[1]]),1)
-    real = imresize(real_, opt.scale1, opt)
-    #opt.scale_factor = math.pow(opt.min_size / (real.shape[2]), 1 / (opt.stop_scale))
-    opt.scale_factor = math.pow(opt.min_size/(min(real.shape[2],real.shape[3])),1/(opt.stop_scale))
-    scale2stop = int(math.log(min(opt.max_size, max(real_.shape[2], real_.shape[3])) / max(real_.shape[0], real_.shape[3]), opt.scale_factor_init))
     opt.stop_scale = opt.num_scales - scale2stop
     return real
 
@@ -373,50 +321,5 @@ def calc_init_scale(opt):
     iter_num = round(math.log(1 / opt.sr_factor, in_scale))
     in_scale = pow(opt.sr_factor, 1 / iter_num)
     return in_scale,iter_num
-
-def quant(prev,device):
-    arr = prev.reshape((-1, 3)).cpu()
-    kmeans = KMeans(n_clusters=5, random_state=0).fit(arr)
-    labels = kmeans.labels_
-    centers = kmeans.cluster_centers_
-    x = centers[labels]
-    x = torch.from_numpy(x)
-    x = move_to_gpu(x)
-    x = x.type(torch.cuda.FloatTensor) if () else x.type(torch.FloatTensor)
-    #x = x.type(torch.FloatTensor.to(device))
-    x = x.view(prev.shape)
-    return x,centers
-
-def quant2centers(paint, centers):
-    arr = paint.reshape((-1, 3)).cpu()
-    kmeans = KMeans(n_clusters=5, init=centers, n_init=1).fit(arr)
-    labels = kmeans.labels_
-    #centers = kmeans.cluster_centers_
-    x = centers[labels]
-    x = torch.from_numpy(x)
-    x = move_to_gpu(x)
-    x = x.type(torch.cuda.FloatTensor) if torch.cuda.is_available() else x.type(torch.FloatTensor)
-    #x = x.type(torch.cuda.FloatTensor)
-    x = x.view(paint.shape)
-    return x
-
-
-def dilate_mask(mask,opt):
-    if opt.mode == "harmonization":
-        element = morphology.disk(radius=7)
-    if opt.mode == "editing":
-        element = morphology.disk(radius=20)
-    mask = torch2uint8(mask)
-    mask = mask[:,:,0]
-    mask = morphology.binary_dilation(mask,selem=element)
-    mask = filters.gaussian(mask, sigma=5)
-    nc_im = opt.nc_im
-    opt.nc_im = 1
-    mask = np2torch(mask,opt)
-    opt.nc_im = nc_im
-    mask = mask.expand(1, opt.nc_im, mask.shape[2], mask.shape[3])
-    plt.imsave('%s/%s_mask_dilated.png' % (opt.ref_dir, opt.ref_name[:-4]), convert_image_np(mask), vmin=0,vmax=1)
-    mask = (mask-mask.min())/(mask.max()-mask.min())
-    return mask
 
 
