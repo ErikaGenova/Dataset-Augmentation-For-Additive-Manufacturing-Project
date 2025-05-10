@@ -333,6 +333,9 @@ def generate_dir2save(opt):
         else:
             dir2save = 'SinGANRandomSamples_ArbitrerySizes/%s/%s/scale_factor=%f,alpha=%d' % (opt.class_, opt.input_name[:-4], opt.scale_factor_init, opt.alpha)
 
+    # join with the output directory opt.out
+    if opt.out is not "":
+        dir2save = os.path.join(opt.out, dir2save)
     return dir2save
 
 """
