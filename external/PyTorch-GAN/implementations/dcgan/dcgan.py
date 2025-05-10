@@ -215,6 +215,7 @@ def main():
 
             # Add R1 penalty if enabled
             if opt.R1_regularization == "True":
+                real_imgs.requires_grad = True  # Add this line
                 r1_loss = r1_regularizer(discriminator(real_imgs), real_imgs)
                 d_loss += r1_loss
 
