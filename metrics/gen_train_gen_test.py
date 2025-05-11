@@ -212,7 +212,15 @@ def get_test_dataloader(args):
     # in this case the train dataloader is created from genereted dataset based on args.model
     if args.mode == "GEN_train":
 
-        # train with gen
+        # test dataloader with CVAE
+        if args.model == "CVAE":
+            # get vectors of paths and labels of VAE's images
+            test_paths, test_labels = get_images_cvae(args)
+            
+            test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+            test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+            return test_loader
 
 
         return None
@@ -243,7 +251,7 @@ def get_test_dataloader(args):
 # training function 
 def train(train_loader, val_loader, args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
+
     print(f"\nTrain samples: {len(train_loader.dataset)}, Validation samples: {len(val_loader.dataset)}")
 
     # Build model
@@ -315,7 +323,6 @@ def train(train_loader, val_loader, args):
 # test function
 def test(model, test_loader):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
 
     # Load the best model
     model.load_state_dict(torch.load(args.checkpoint))
@@ -378,39 +385,30 @@ if __name__ == "__main__":
     args.data_transforms = get_transformations(args)
 
     if args.mode == "GEN_train":
-
-        # get dataloaders
-        print("Dataloaders with original data...")
+        print("Train and Val dataloaders with original data...")
         train_loader, val_loader = get_train_val_dataloaders(args)
-    
-        # Training with the original 
+
         print("Training with original data...")
         train(train_loader, val_loader, args)
 
+        print(f"Test dataloader with {args.model} data...")
         test_loader = get_test_dataloader(args) # Get test data loader from CvaeSyntheticDataset
         
-        # test with the augumented 
+        print(f"Test on generated data by {args.model}...")
         test(args.model, test_loader)
 
 
     if args.mode == "GEN_test": 
 
-        train_loader = None # from SyntheticDataset
-        val_loader = None # from SyntheticDataset
-        test_loader = None # from OriginalDefectDataset
+        print(f"Train and Val dataloaders with {args.model} data...")
+        train_loader, val_loader = get_train_val_dataloaders(args)
+        
+        print(f"Training with {args.model} synthetic data...")
+        train(train_loader, val_loader, args)
 
-        if args.model == "CVAE":
-            # get dataloaders
-            print("Dataloaders with CVAE's synthetic data...")
-            train_loader, val_loader = get_train_val_dataloaders(args)
-            
-            # training with the CVAE
-            print("Training with CVAE's synthetic data...")
-            train(train_loader, val_loader, args)
+        print(f"Test dataloader with original data...")
+        test_loader = get_test_dataloader(args)
 
-            # get test dataloader with original data
-            test_loader = get_test_dataloader(args)
-
-            # test with the original data
-            test(args.model, test_loader)
+        print(f"Test on original data...")
+        test(args.model, test_loader)
 
