@@ -174,10 +174,6 @@ def get_train_val_dataloaders(args):
 
             # get vectors of paths and labels of VAE's images
             file_paths, labels = get_images_cvae(args)
-            
-            # print the vectors of file paths and labels
-            print("file paths cvae: ", file_paths)
-            print("labels cvae: ", labels)
 
             # train/val split stratified by label
             train_idx, val_idx = train_test_split(
@@ -391,9 +387,10 @@ if __name__ == "__main__":
         print("Training with original data...")
         train(train_loader, val_loader, args)
 
-        print(f"Test dataloader with {args.model} data...")
+        print(f"\nTest dataloader with {args.model} data...")
         test_loader = get_test_dataloader(args) # Get test data loader from CvaeSyntheticDataset
-        
+        print("Test dataloader loaded!\n")
+
         print(f"Test on generated data by {args.model}...")
         test(args.model, test_loader)
 
@@ -406,8 +403,9 @@ if __name__ == "__main__":
         print(f"Training with {args.model} synthetic data...")
         train(train_loader, val_loader, args)
 
-        print(f"Test dataloader with original data...")
+        print(f"\nTest dataloader with original data...")
         test_loader = get_test_dataloader(args)
+        print("Test dataloader loaded!\n")
 
         print(f"Test on original data...")
         test(args.model, test_loader)
