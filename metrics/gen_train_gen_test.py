@@ -353,7 +353,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_seed", type=int, help="Random seed", default=42)
     parser.add_argument("--epochs", type=int, help="Number of epochs", default=20)
     parser.add_argument("--lr", type=float, help="Learning rate", default=0.0001)
-
+    parser.add_argument('--checkpoint', type=str, default='best_model')
 
     args = parser.parse_args()
 
@@ -403,22 +403,14 @@ if __name__ == "__main__":
             # get dataloaders
             print("Dataloaders with CVAE's synthetic data...")
             train_loader, val_loader = get_train_val_dataloaders(args)
-
-            print("train_dataloader: ", train_loader)
-            print("val_dataloader: ", val_loader)
             
             # training with the CVAE
-            #print("Training with CVAE's synthetic data...")
-            train(train_loader, test_loader, args)
+            print("Training with CVAE's synthetic data...")
+            train(train_loader, val_loader, args)
 
             # get test dataloader with original data
             test_loader = get_test_dataloader(args)
 
             # test with the original data
+            test(args.model, test_loader)
 
-            
-
-        
-        
-        # train...
-        # test...
