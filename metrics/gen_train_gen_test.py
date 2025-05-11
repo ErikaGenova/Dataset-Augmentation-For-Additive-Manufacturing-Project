@@ -1,5 +1,7 @@
 import os
+import re
 import glob
+import sys
 import torch
 import argparse
 from PIL import Image
@@ -14,10 +16,12 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 import pandas as pd
-# import build_model
-from src.model import build_model 
+
 from sklearn.model_selection import train_test_split
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# import build_model
+from src.model import build_model 
 
 # Dataset for the synthetic data by CVAE
 class CvaeSyntheticDataset(Dataset):
@@ -55,6 +59,22 @@ class OriginalDefectDataset(Dataset):
             image = self.transform(image)
         return image, label
 
+
+# get all paths and labels of generated images by CVAE
+def get_images_cvae(args):
+    file_paths, labels = [], []
+
+    for ext in ('png', 'jpg', 'jpeg'):
+        files = glob.glob(os.path.join(args.dir_generated, f'*.{ext}'))
+        for path in files:
+            filename = os.path.basename(path)
+            match = re.search(r'class_(\d+)', filename)
+            if match:
+                class_id = int(match.group(1))
+                file_paths.append(path)
+                labels.append(class_id)
+
+    return file_paths, labels
 
 # get transformations to have size 
 def get_transformations(args):
@@ -100,8 +120,6 @@ def get_train_val_dataloaders(args):
 
     # In this case, the training and validation dataloaders are created from the original dataset
     if args.mode == "GEN_train":
-        # get transformations for the images
-        data_transforms = get_transformations(args)
 
         # path of the original dataset
         data_dir = os.path.join(args.base_dir, "images", "original")
@@ -135,13 +153,50 @@ def get_train_val_dataloaders(args):
         val_labels = [labels[i] for i in val_idx]
 
         # Create datasets and dataloaders
-        train_ds = OriginalDefectDataset(train_paths, train_labels, transform=data_transforms['train'])
-        val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=data_transforms['val'])
+        train_ds = OriginalDefectDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+        val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=args.data_transforms['val'])
         train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     
     # In this case, the training and validation dataloaders are created from the generated dataset based on the model and experiment
     else:
+
+        if(args.model == "CVAE"):
+            print("Train with CVAE's synthetic data...")
+            # parameters
+            batch_size = args.batch_size
+            val_split = args.val_split
+            num_workers = args.num_workers
+            random_seed = args.random_seed
+
+            # get vectors of paths and labels of VAE's images
+            file_paths, labels = get_images_cvae(args)
+            
+            # print the vectors of file paths and labels
+            print("file paths cvae: ", file_paths)
+            print("labels cvae: ", labels)
+
+            # train/val split stratified by label
+            train_idx, val_idx = train_test_split(
+                list(range(len(file_paths))),
+                test_size=val_split,
+                stratify=labels,
+                random_state=random_seed
+            )
+
+            train_paths = [file_paths[i] for i in train_idx]
+            train_labels = [labels[i] for i in train_idx]
+            val_paths = [file_paths[i] for i in val_idx]
+            val_labels = [labels[i] for i in val_idx]
+
+            # Create datasets and dataloaders
+            train_ds = CvaeSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+            val_ds   = CvaeSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+            train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+            val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+            return train_loader, val_loader
+
         return None, None
     
     
@@ -153,11 +208,13 @@ def get_test_dataloader(args):
 
     # in this case the train dataloader is created from genereted dataset based on args.model
     if args.mode == "GEN_train":
+
+        # train with gen
+
+
         return None
     # in this case the train dataloader is created from original dataset
     else:
-        # get transformations for the images
-        data_transforms = get_transformations(args)
 
         # path of the original dataset
         data_dir = os.path.join(args.base_dir, "images", "original")
@@ -175,7 +232,7 @@ def get_test_dataloader(args):
                 test_paths += files
                 test_labels += [idx] * len(files)
         
-        test_ds = OriginalDefectDataset(test_paths, test_labels, transform=data_transforms['val'])
+        test_ds = OriginalDefectDataset(test_paths, test_labels, transform=args.data_transforms['val'])
         test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return test_loader
@@ -293,10 +350,27 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.mode == "GEN_train":
+    # control if the mode is correct
+    if args.mode not in ("GEN_train", "GEN_test"):
+        print("Invalide mode. Choose either 'GEN_train' or 'GEN_test'")
+        sys.exit()
 
-        # path of the generated data
-        args.dir_generated = os.path.join(args.base_dir, "images", "augumented", args.model, args.experiment)
+    # control if the model is correct
+    if args.model not in ("CVAE", "GANs"):
+        print("Invalid model. Choose either 'CVAE' or 'GANs'")
+        sys.exit()
+
+    # path of the generated data based on specific model and number of experiment
+    args.dir_generated = os.path.join(args.base_dir, "images", "augumented", args.model, args.experiment)
+
+    if not os.path.exists(args.dir_generated):
+        print(f"Directory {args.dir_generated} doesn't exist. Please try again")
+        sys.exit()
+
+    # get transformations for the images
+    args.data_transforms = get_transformations(args)
+
+    if args.mode == "GEN_train":
 
         # get dataloaders
         train_loader, val_loader = get_train_val_dataloaders(args)
@@ -310,11 +384,18 @@ if __name__ == "__main__":
         test(args.model, test_loader)
 
 
-    elif args.mode == "GEN_test": 
+    if args.mode == "GEN_test": 
+
         train_loader = None # from SyntheticDataset
         val_loader = None # from SyntheticDataset
         test_loader = None # from OriginalDefectDataset
+
+        if args.model == "CVAE":
+            # get dataloaders
+            train_loader, val_loader = get_train_val_dataloaders(args)
+
+            print("")
+        
+        
         # train...
         # test...
-    else:
-        print("Invalide mode. Choose either 'GEN_train' or 'GEN_test'")
