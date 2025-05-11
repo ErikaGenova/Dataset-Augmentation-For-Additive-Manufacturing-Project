@@ -1,4 +1,6 @@
 import os
+import re
+import sys
 import glob
 import torch
 import argparse
@@ -8,7 +10,6 @@ from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 import torch.utils.data
-import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from torchvision.models.inception import inception_v3
 from scipy.stats import entropy
@@ -17,18 +18,29 @@ from torchvision.models import Inception_V3_Weights
 
 """
   get_all_file_paths(data_dir) is a function that loads file paths for all images in the dataset
-"""
-# TODO: DA MODIFICARE IN BASE A COME SALVEREMO LE IMMAGINI GENERATE  
-def get_all_file_paths(data_dir):
+""" 
+def get_all_file_paths(args):
     '''Load file paths for all images in the dataset.'''
-    classes = ['NoDefects', 'Defects']
-    file_paths = []
-    for idx, cls in enumerate(classes):
-        folder = os.path.join(data_dir, cls)
+
+    # for original dataset
+    if args.model == "original":
+        classes = ['NoDefects', 'Defects']
+        file_paths = []
+        for idx, cls in enumerate(classes):
+            folder = os.path.join(args.dir_images, cls)
+            for ext in ('png', 'jpg', 'jpeg'):
+                files = glob.glob(os.path.join(folder, f'*.{ext}'))
+                file_paths += files
+        return file_paths
+    # for generated images by CVAE and GANs
+    else: 
+        file_paths= []
+
         for ext in ('png', 'jpg', 'jpeg'):
-            files = glob.glob(os.path.join(folder, f'*.{ext}'))
-            file_paths += files
-    return file_paths
+            files = glob.glob(os.path.join(args.dir_images, f'*.{ext}'))
+            for path in files:
+                file_paths.append(path)
+        return file_paths
 
 # Define the image transformation pipeline
 image_trasforms = transforms.Compose([
@@ -54,18 +66,7 @@ class IgnoreLabelDefectDataset(torch.utils.data.Dataset):
       if self.transform:
           image = self.transform(image)
       return image
-  
-# Dataset wrapper to ignore labels and return only images
-class IgnoreLabelDataset(torch.utils.data.Dataset):
-  """Dataset wrapper to ignore labels and return only images."""
-  def __init__(self, orig):
-      self.orig = orig
 
-  def __getitem__(self, index):
-      return self.orig[index][0]  # Return only the image, ignoring the label
-
-  def __len__(self):
-      return len(self.orig)
 
 """Computes the inception score of the generated images imgs
 
@@ -135,22 +136,30 @@ def inception_score(imgs, cuda=True, batch_size=32, splits=1):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute Inception Score')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA for computation', default=False)
-    parser.add_argument('--dir_images', type=str, help='Directory of images', required=True)
+    parser.add_argument("--base_dir", type=str, help="Base directory of the projects", default="/content/mla_project/")
+    parser.add_argument("--model", type=str, help="Model name", required=True)
+    parser.add_argument("--experiment", type=str, help="Experiment", required=True)
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for Inception model')
     parser.add_argument('--splits', type=int, default=10, help='Number of splits for Inception Score')
     args = parser.parse_args()
 
-    # Load the CIFAR-10 dataset with transformations
-    cifar = dset.CIFAR10(root='data/', download=True,
-                             transform=transforms.Compose([
-                                 transforms.Resize(32),  # Resize images to 32x32
-                                 transforms.ToTensor(),  # Convert images to tensors
-                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize images
-                             ])
-    )
+    # control if the model is correct
+    if args.model not in ("original, CVAE", "GANs"):
+        print("Invalid model. Choose either 'original' or 'CVAE' or 'GANs'")
+        sys.exit()
+
+    if args.model == "original":
+        args.dir_images = os.path.join(args.base_dir, "images", "original")
+    else:
+        # path of the generated data based on specific model and number of experiment
+        args.dir_images = os.path.join(args.base_dir, "images", "augmented", args.model, args.experiment)
+
+    if not os.path.exists(args.dir_images):
+        print(f"Directory {args.dir_images} doesn't exist. Please try again")
+        sys.exit()
 
     # get all file paths for the dataset
-    file_paths = get_all_file_paths(args.dir_images)
+    file_paths = get_all_file_paths(args)
 
     # Create a dataset with the file paths and transformations
     dataset = IgnoreLabelDefectDataset(file_paths, transform=image_trasforms)

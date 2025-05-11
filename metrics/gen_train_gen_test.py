@@ -4,19 +4,15 @@ import glob
 import sys
 import torch
 import argparse
-from PIL import Image
-import numpy as np
-from torch import nn
-from torch.autograd import Variable
-from torch.nn import functional as F
+import pandas as pd
 import torch.utils.data
-import torchvision.datasets as dset
+import torch.optim as optim
 import torchvision.transforms as transforms
 
+from torch import nn
+from PIL import Image
+from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader
-import torch.optim as optim
-import pandas as pd
-
 from sklearn.model_selection import train_test_split
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
