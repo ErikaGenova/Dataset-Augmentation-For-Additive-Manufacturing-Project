@@ -361,7 +361,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # path of the generated data based on specific model and number of experiment
-    args.dir_generated = os.path.join(args.base_dir, "images", "augumented", args.model, args.experiment)
+    args.dir_generated = os.path.join(args.base_dir, "images", "augmented", args.model, args.experiment)
 
     if not os.path.exists(args.dir_generated):
         print(f"Directory {args.dir_generated} doesn't exist. Please try again")
