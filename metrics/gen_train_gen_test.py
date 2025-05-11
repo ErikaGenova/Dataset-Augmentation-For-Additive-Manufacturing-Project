@@ -382,7 +382,7 @@ if __name__ == "__main__":
         # get dataloaders
         print("Dataloaders with original data...")
         train_loader, val_loader = get_train_val_dataloaders(args)
-
+    
         # Training with the original 
         print("Training with original data...")
         train(train_loader, val_loader, args)
@@ -404,8 +404,11 @@ if __name__ == "__main__":
             print("Dataloaders with CVAE's synthetic data...")
             train_loader, val_loader = get_train_val_dataloaders(args)
 
+            print("train_dataloader: ", train_loader)
+            print("val_dataloader: ", val_loader)
+            
             # training with the CVAE
-            print("Training with CVAE's synthetic data...")
+            #print("Training with CVAE's synthetic data...")
             train(train_loader, test_loader, args)
 
             # get test dataloader with original data
