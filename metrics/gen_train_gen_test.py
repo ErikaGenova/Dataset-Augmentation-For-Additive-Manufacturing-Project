@@ -210,6 +210,10 @@ def get_test_dataloader(args):
 
         # test dataloader with CVAE
         if args.model == "CVAE":
+            # parameters
+            batch_size = args.batch_size
+            num_workers = args.num_workers
+
             # get vectors of paths and labels of VAE's images
             test_paths, test_labels = get_images_cvae(args)
             
