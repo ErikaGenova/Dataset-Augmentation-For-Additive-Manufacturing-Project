@@ -38,7 +38,24 @@ class CvaeSyntheticDataset(Dataset):
             image = self.transform(image)
         return image, label
 
-# class GANSyntheticDataset(Dataset): ...
+# Dataset for the synthetic data by GANs
+class GANSyntheticDataset(Dataset):
+    '''Custom dataset reading files and labels from lists.'''
+    def __init__(self, file_paths, labels, transform=None):
+        self.file_paths = file_paths
+        self.labels = labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.file_paths[idx]
+        label = self.labels[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, label
 
 # Dataset for the original data
 class OriginalDefectDataset(Dataset):
@@ -61,7 +78,7 @@ class OriginalDefectDataset(Dataset):
 
 
 # get all paths and labels of generated images by CVAE
-def get_images_cvae(args):
+def get_generated_images(args):
     file_paths, labels = [], []
 
     for ext in ('png', 'jpg', 'jpeg'):
@@ -169,7 +186,7 @@ def get_train_val_dataloaders(args):
             random_seed = args.random_seed
 
             # get vectors of paths and labels of VAE's images
-            file_paths, labels = get_images_cvae(args)
+            file_paths, labels = get_generated_images(args)
 
             # train/val split stratified by label
             train_idx, val_idx = train_test_split(
@@ -191,9 +208,37 @@ def get_train_val_dataloaders(args):
             val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
             return train_loader, val_loader
+        
+        if(args.model == "GANs"):
+            # parameters
+            batch_size = args.batch_size
+            val_split = args.val_split
+            num_workers = args.num_workers
+            random_seed = args.random_seed
 
-        return None, None
-    
+            # get vectors of paths and labels of VAE's images
+            file_paths, labels = get_generated_images(args)
+
+            # train/val split stratified by label
+            train_idx, val_idx = train_test_split(
+                list(range(len(file_paths))),
+                test_size=val_split,
+                stratify=labels,
+                random_state=random_seed
+            )
+
+            train_paths = [file_paths[i] for i in train_idx]
+            train_labels = [labels[i] for i in train_idx]
+            val_paths = [file_paths[i] for i in val_idx]
+            val_labels = [labels[i] for i in val_idx]
+
+            # Create datasets and dataloaders
+            train_ds = GANSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+            val_ds   = GANSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+            train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+            val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+            return train_loader, val_loader
     
     return train_loader, val_loader
 
@@ -211,15 +256,28 @@ def get_test_dataloader(args):
             num_workers = args.num_workers
 
             # get vectors of paths and labels of VAE's images
-            test_paths, test_labels = get_images_cvae(args)
+            test_paths, test_labels = get_generated_images(args)
+            
+            test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+            test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+            return test_loader
+        
+        # test dataloader with GANs
+        if args.model == "GANs":
+            # parameters
+            batch_size = args.batch_size
+            num_workers = args.num_workers
+
+            # get vectors of paths and labels of VAE's images
+            test_paths, test_labels = get_generated_images(args)
             
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
             test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
             return test_loader
 
-
-        return None
+        return test_loader
     # in this case the train dataloader is created from original dataset
     else:
 
