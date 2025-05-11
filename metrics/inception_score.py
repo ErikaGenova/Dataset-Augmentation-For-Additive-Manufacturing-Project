@@ -161,6 +161,8 @@ if __name__ == '__main__':
     # get all file paths for the dataset
     file_paths = get_all_file_paths(args)
 
+    print("all paths: ", file_paths)
+
     # Create a dataset with the file paths and transformations
     dataset = IgnoreLabelDefectDataset(file_paths, transform=image_trasforms)
 
