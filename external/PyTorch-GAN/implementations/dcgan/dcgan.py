@@ -237,15 +237,18 @@ def main():
             )
 
             batches_done = epoch * len(dataloader) + i
+            """
             if batches_done % opt.sample_interval == 0:
                 # Save generated images in images_dir
                 save_image(gen_imgs.data[:25], os.path.join(images_dir, f"{batches_done}.png"), nrow=5, normalize=True)
+            """
                 
         # Save the models every 50 epochs
-        if epoch % 200 == 0 or epoch == opt.n_epochs - 1:
+        #if epoch % 200 == 0 or epoch == opt.n_epochs - 1:
+        if epoch == opt.n_epochs - 1:
             # Save the models
             torch.save(generator.state_dict(), os.path.join(output_dir, f"generator_epoch_{epoch}.pth"))
-            torch.save(discriminator.state_dict(), os.path.join(output_dir, f"discriminator_epoch_{epoch}.pth"))
+            #torch.save(discriminator.state_dict(), os.path.join(output_dir, f"discriminator_epoch_{epoch}.pth"))
             print(f"Models saved for epoch {epoch}")
 
 if __name__ == "__main__":
