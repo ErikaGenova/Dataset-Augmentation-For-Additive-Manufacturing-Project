@@ -111,6 +111,19 @@ def main():
     cuda = True if torch.cuda.is_available() else False
     print("Using GPU" if cuda else "Using CPU")
 
+        # Directory to save models
+    if opt.output_dir is not None:
+        output_dir = os.path.join(opt.output_dir, "saved_models")
+        images_dir = os.path.join(opt.output_dir, "images")   
+    else:
+        output_dir = "saved_models"
+        images_dir = "images"
+
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(images_dir, exist_ok=True)
+    print(f"Output directory: {output_dir}")
+    print(f"Images directory: {images_dir}")
+
     def weights_init_normal(m):
         classname = m.__class__.__name__
         if classname.find("Conv") != -1:
@@ -156,17 +169,6 @@ def main():
     optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr_d, betas=(opt.b1, opt.b2))
 
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
-
-    # Directory to save models
-    if opt.output_dir is not None:
-        output_dir = os.path.join(opt.output_dir, "saved_models")
-        images_dir = os.path.join(opt.output_dir, "images")   
-    else:
-        output_dir = "saved_models"
-        images_dir = "images"
-
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(images_dir, exist_ok=True)
 
     # R1 regularization
     if opt.R1_regularization == "True":
