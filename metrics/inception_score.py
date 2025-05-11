@@ -164,7 +164,7 @@ if __name__ == '__main__':
     # Create a dataset with the file paths and transformations
     dataset = IgnoreLabelDefectDataset(file_paths, transform=image_trasforms)
 
-    print ("Calculating Inception Score...")
+    print (f"Calculating Inception Score on {args.model} images...")
 
     # Perform Inception Score calculation
     mean, std = inception_score(dataset, cuda=args.cuda, batch_size=args.batch_size, splits=args.splits)
