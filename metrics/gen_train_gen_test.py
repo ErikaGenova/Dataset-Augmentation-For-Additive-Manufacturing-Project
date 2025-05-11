@@ -35,8 +35,12 @@ class CvaeSyntheticDataset(Dataset):
         return len(self.file_paths)
 
     def __getitem__(self, idx):
-        # TODO: vedi come come sono salvati i dati dalle cvae e fai di conseguenza
-        return
+        img_path = self.file_paths[idx]
+        label = self.labels[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, label
 
 # class GANSyntheticDataset(Dataset): ...
 
@@ -162,7 +166,6 @@ def get_train_val_dataloaders(args):
     else:
 
         if(args.model == "CVAE"):
-            print("Train with CVAE's synthetic data...")
             # parameters
             batch_size = args.batch_size
             val_split = args.val_split
@@ -288,6 +291,8 @@ def train(train_loader, val_loader, args):
         val_acc = val_correct / val_total
 
         logs.append([epoch+1, train_loss, val_loss, train_acc, val_acc])
+        
+        # print epoch with the corrisponding metrics 
         print(f"Epoch {epoch+1}/{args.epochs} | "
               f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} | "
               f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
@@ -346,6 +351,8 @@ if __name__ == "__main__":
     parser.add_argument("--val_split", type=float, help="Validation split", default=0.2)
     parser.add_argument("--num_workers", type=int, help="Number of workers", default=4)
     parser.add_argument("--random_seed", type=int, help="Random seed", default=42)
+    parser.add_argument("--epochs", type=int, help="Number of epochs", default=20)
+    parser.add_argument("--lr", type=float, help="Learning rate", default=0.0001)
 
 
     args = parser.parse_args()
@@ -373,9 +380,11 @@ if __name__ == "__main__":
     if args.mode == "GEN_train":
 
         # get dataloaders
+        print("Dataloaders with original data...")
         train_loader, val_loader = get_train_val_dataloaders(args)
 
         # Training with the original 
+        print("Training with original data...")
         train(train_loader, val_loader, args)
 
         test_loader = get_test_dataloader(args) # Get test data loader from CvaeSyntheticDataset
@@ -392,9 +401,20 @@ if __name__ == "__main__":
 
         if args.model == "CVAE":
             # get dataloaders
+            print("Dataloaders with CVAE's synthetic data...")
             train_loader, val_loader = get_train_val_dataloaders(args)
 
-            print("")
+            # training with the CVAE
+            print("Training with CVAE's synthetic data...")
+            train(train_loader, test_loader, args)
+
+            # get test dataloader with original data
+            test_loader = get_test_dataloader(args)
+
+            # test with the original data
+
+            
+
         
         
         # train...
