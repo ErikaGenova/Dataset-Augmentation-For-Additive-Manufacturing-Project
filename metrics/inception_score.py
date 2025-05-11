@@ -138,7 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda', action='store_true', help='Use CUDA for computation', default=False)
     parser.add_argument("--base_dir", type=str, help="Base directory of the projects", default="/content/mla_project/")
     parser.add_argument("--model", type=str, help="Model name", required=True)
-    parser.add_argument("--experiment", type=str, help="Experiment", required=True)
+    parser.add_argument("--experiment", type=str, help="Experiment", default="")
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for Inception model')
     parser.add_argument('--splits', type=int, default=10, help='Number of splits for Inception Score')
     args = parser.parse_args()
