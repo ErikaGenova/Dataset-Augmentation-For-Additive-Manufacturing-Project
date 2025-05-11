@@ -311,7 +311,7 @@ def train(train_loader, val_loader, args):
     df.to_csv('logs.csv', index=False)
     
     # save the model in the args
-    args.model = model
+    args.model_ = model
 
     print('Training completed')
     
@@ -383,6 +383,7 @@ if __name__ == "__main__":
     if args.mode == "GEN_train":
         print("Train and Val dataloaders with original data...")
         train_loader, val_loader = get_train_val_dataloaders(args)
+        print("Train and val dataloaders loaded!\n")
 
         print("Training with original data...")
         train(train_loader, val_loader, args)
@@ -392,13 +393,14 @@ if __name__ == "__main__":
         print("Test dataloader loaded!\n")
 
         print(f"Test on generated data by {args.model}...")
-        test(args.model, test_loader)
+        test(args.model_, test_loader)
 
 
     if args.mode == "GEN_test": 
 
         print(f"Train and Val dataloaders with {args.model} data...")
         train_loader, val_loader = get_train_val_dataloaders(args)
+        print("Train and val dataloaders loaded!\n")
         
         print(f"Training with {args.model} synthetic data...")
         train(train_loader, val_loader, args)
@@ -408,5 +410,5 @@ if __name__ == "__main__":
         print("Test dataloader loaded!\n")
 
         print(f"Test on original data...")
-        test(args.model, test_loader)
+        test(args.model_, test_loader)
 
