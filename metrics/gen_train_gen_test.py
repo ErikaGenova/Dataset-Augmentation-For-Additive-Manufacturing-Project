@@ -76,6 +76,21 @@ class OriginalDefectDataset(Dataset):
             image = self.transform(image)
         return image, label
 
+# get all paths and labels of original dataset
+def get_original_images(args):
+    # path of the original dataset
+    data_dir = os.path.join(args.base_dir, "images", "original")
+
+    classes = ['NoDefects', 'Defects']
+    file_paths, labels = [], []
+    for idx, cls in enumerate(classes):
+        folder = os.path.join(data_dir, cls)
+        for ext in ('png', 'jpg', 'jpeg'):
+            files = glob.glob(os.path.join(folder, f'*.{ext}'))
+            file_paths += files
+            labels += [idx] * len(files)
+
+    return file_paths, labels
 
 # get all paths and labels of generated images by CVAE
 def get_generated_images(args):
@@ -135,26 +150,16 @@ def get_train_val_dataloaders(args):
     train_loader = None
     val_loader = None
 
+    # parameters
+    batch_size = args.batch_size
+    val_split = args.val_split
+    num_workers = args.num_workers
+    random_seed = args.random_seed
+
     # In this case, the training and validation dataloaders are created from the original dataset
     if args.mode == "GEN_train":
-
-        # path of the original dataset
-        data_dir = os.path.join(args.base_dir, "images", "original")
-
-        # parameters
-        batch_size = args.batch_size
-        val_split = args.val_split
-        num_workers = args.num_workers
-        random_seed = args.random_seed
-
-        classes = ['NoDefects', 'Defects']
-        file_paths, labels = [], []
-        for idx, cls in enumerate(classes):
-            folder = os.path.join(data_dir, cls)
-            for ext in ('png', 'jpg', 'jpeg'):
-                files = glob.glob(os.path.join(folder, f'*.{ext}'))
-                file_paths += files
-                labels += [idx] * len(files)
+        
+        file_paths, labels = get_original_images(args)
 
         # train/val split stratified by label
         train_idx, val_idx = train_test_split(
@@ -172,73 +177,38 @@ def get_train_val_dataloaders(args):
         # Create datasets and dataloaders
         train_ds = OriginalDefectDataset(train_paths, train_labels, transform=args.data_transforms['train'])
         val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=args.data_transforms['val'])
-        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-        val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     
     # In this case, the training and validation dataloaders are created from the generated dataset based on the model and experiment
     else:
 
+        # get vectors of paths and labels of VAE's images
+        file_paths, labels = get_generated_images(args)
+
+        # train/val split stratified by label
+        train_idx, val_idx = train_test_split(
+            list(range(len(file_paths))),
+            test_size=val_split,
+            stratify=labels,
+            random_state=random_seed
+        )
+
+        train_paths = [file_paths[i] for i in train_idx]
+        train_labels = [labels[i] for i in train_idx]
+        val_paths = [file_paths[i] for i in val_idx]
+        val_labels = [labels[i] for i in val_idx]
+        
         if(args.model == "CVAE"):
-            # parameters
-            batch_size = args.batch_size
-            val_split = args.val_split
-            num_workers = args.num_workers
-            random_seed = args.random_seed
-
-            # get vectors of paths and labels of VAE's images
-            file_paths, labels = get_generated_images(args)
-
-            # train/val split stratified by label
-            train_idx, val_idx = train_test_split(
-                list(range(len(file_paths))),
-                test_size=val_split,
-                stratify=labels,
-                random_state=random_seed
-            )
-
-            train_paths = [file_paths[i] for i in train_idx]
-            train_labels = [labels[i] for i in train_idx]
-            val_paths = [file_paths[i] for i in val_idx]
-            val_labels = [labels[i] for i in val_idx]
-
             # Create datasets and dataloaders
             train_ds = CvaeSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = CvaeSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
-            train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-            val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-            return train_loader, val_loader
         
         if(args.model == "GANs"):
-            # parameters
-            batch_size = args.batch_size
-            val_split = args.val_split
-            num_workers = args.num_workers
-            random_seed = args.random_seed
-
-            # get vectors of paths and labels of VAE's images
-            file_paths, labels = get_generated_images(args)
-
-            # train/val split stratified by label
-            train_idx, val_idx = train_test_split(
-                list(range(len(file_paths))),
-                test_size=val_split,
-                stratify=labels,
-                random_state=random_seed
-            )
-
-            train_paths = [file_paths[i] for i in train_idx]
-            train_labels = [labels[i] for i in train_idx]
-            val_paths = [file_paths[i] for i in val_idx]
-            val_labels = [labels[i] for i in val_idx]
-
             # Create datasets and dataloaders
             train_ds = GANSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = GANSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
-            train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-            val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-            return train_loader, val_loader
+        
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     
     return train_loader, val_loader
 
@@ -246,59 +216,33 @@ def get_train_val_dataloaders(args):
 def get_test_dataloader(args):
     test_loader = None
 
+    # parameters
+    batch_size = args.batch_size
+    num_workers = args.num_workers
+
     # in this case the train dataloader is created from genereted dataset based on args.model
     if args.mode == "GEN_train":
 
+        # get vectors of paths and labels of VAE's images
+        test_paths, test_labels = get_generated_images(args)
+
         # test dataloader with CVAE
         if args.model == "CVAE":
-            # parameters
-            batch_size = args.batch_size
-            num_workers = args.num_workers
-
-            # get vectors of paths and labels of VAE's images
-            test_paths, test_labels = get_generated_images(args)
-            
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
-            test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-            return test_loader
+            
         
         # test dataloader with GANs
         if args.model == "GANs":
-            # parameters
-            batch_size = args.batch_size
-            num_workers = args.num_workers
-
-            # get vectors of paths and labels of VAE's images
-            test_paths, test_labels = get_generated_images(args)
-            
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
-            test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-            return test_loader
-
-        return test_loader
     # in this case the train dataloader is created from original dataset
     else:
 
-        # path of the original dataset
-        data_dir = os.path.join(args.base_dir, "images", "original")
-
-        # parameters
-        batch_size = args.batch_size
-        num_workers = args.num_workers
-
-        classes = ['NoDefects', 'Defects']
-        test_paths, test_labels = [], []
-        for idx, cls in enumerate(classes):
-            folder = os.path.join(data_dir, cls)
-            for ext in ('png', 'jpg', 'jpeg'):
-                files = glob.glob(os.path.join(folder, f'*.{ext}'))
-                test_paths += files
-                test_labels += [idx] * len(files)
+        test_paths, test_labels = get_original_images(args)
         
         test_ds = OriginalDefectDataset(test_paths, test_labels, transform=args.data_transforms['val'])
-        test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return test_loader
 
