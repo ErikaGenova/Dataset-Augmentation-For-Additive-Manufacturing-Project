@@ -88,8 +88,6 @@ class R1(nn.Module):
 
 
 def main():
-    os.makedirs("images", exist_ok=True)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
@@ -106,6 +104,7 @@ def main():
     parser.add_argument("--generate_defect", type=str, default="True", help="generate defect images")
     parser.add_argument("--R1_regularization", type=str, default="False", help="use R1 regularization")
     parser.add_argument("--R1_lambda", type=float, default=10.0, help="lambda for R1 regularization")
+    parser.add_argument("--output_dir", type=str, default=None, help="directory to save models")
     opt = parser.parse_args()
     print(opt)
 
@@ -159,7 +158,15 @@ def main():
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
     # Directory to save models
-    os.makedirs("saved_models", exist_ok=True)
+    if opt.output_dir is not None:
+        output_dir = os.path.join(opt.output_dir, "saved_models")
+        images_dir = os.path.join(opt.output_dir, "images")   
+    else:
+        output_dir = "saved_models"
+        images_dir = "images"
+
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(images_dir, exist_ok=True)
 
     # R1 regularization
     if opt.R1_regularization == "True":
@@ -229,12 +236,14 @@ def main():
 
             batches_done = epoch * len(dataloader) + i
             if batches_done % opt.sample_interval == 0:
-                save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
-
+                # Save generated images in images_dir
+                save_image(gen_imgs.data[:25], os.path.join(images_dir, f"{batches_done}.png"), nrow=5, normalize=True)
+                
         # Save the models every 50 epochs
         if epoch % 200 == 0 or epoch == opt.n_epochs - 1:
-            torch.save(generator.state_dict(), f"saved_models/generator_epoch_{epoch}.pth")
-            torch.save(discriminator.state_dict(), f"saved_models/discriminator_epoch_{epoch}.pth")
+            # Save the models
+            torch.save(generator.state_dict(), os.path.join(output_dir, f"generator_epoch_{epoch}.pth"))
+            torch.save(discriminator.state_dict(), os.path.join(output_dir, f"discriminator_epoch_{epoch}.pth"))
             print(f"Models saved for epoch {epoch}")
 
 if __name__ == "__main__":
