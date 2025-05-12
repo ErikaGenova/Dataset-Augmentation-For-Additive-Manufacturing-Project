@@ -218,7 +218,8 @@ if __name__ == "__main__":
     print("Dataloader created.")
     model = Vae(latent_size, image_size).to(device)
     print("Model created.")
-    
+
+    # If the training is interrupted, you can load the model from the last checkpoint and continue training
     if load_epoch > 0:
         model.load_state_dict(torch.load('./checkpoints/model_{}.pt'.format(load_epoch), map_location=torch.device('cpu')))
         print("Model {} loaded.".format(load_epoch))
