@@ -133,7 +133,7 @@ def main():
 
             with torch.no_grad():
                 dist = loss_fn(original_image, generated_image).item()
-            print(f"{filename}: {dist:.4f}")
+                
             # if previous L-PIPS is higher than the current, I change it
             if dist < min_dist:
                 min_dist = dist
