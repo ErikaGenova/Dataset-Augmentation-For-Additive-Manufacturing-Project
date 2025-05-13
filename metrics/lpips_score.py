@@ -106,7 +106,7 @@ def main():
             sys.exit()
 
         # create the full oath of the generated image
-        path_gen = os.path.join(args.generated_dir, filename)
+        path_gen = os.path.join(args.generated_dir, args.model, args.experiment, filename)
 
         # Doesn't exist the path of generated image
         if not os.path.exists(path_gen):
