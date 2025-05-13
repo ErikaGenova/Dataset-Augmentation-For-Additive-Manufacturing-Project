@@ -79,8 +79,8 @@ def main():
         print(f"Doesn't exist the path of generated images: {args.full_generated_dir}")
         sys.exit()
 
-    # define data_trasforms
-    args.data_trasforms = get_transformations(args)
+    # define data_transforms
+    args.data_transforms = get_transformations(args)
 
     # iterate on the generated images
     for idx, filename in enumerate(tqdm(os.listdir(args.full_generated_dir))):
