@@ -449,7 +449,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # control if the model is correct
-    if args.model not in ("CVAE", "GANs"):
+    if args.model not in ("VAE", "CVAE", "GANs", "Diffusion", "SinGAN"):
         print("Invalid model. Choose either 'VAE', 'CVAE', 'Diffusion', 'SinGAN' or 'GANs'")
         sys.exit()
 
