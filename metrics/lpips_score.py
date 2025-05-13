@@ -83,7 +83,7 @@ def main():
     args.data_transforms = get_transformations(args)
 
     # iterate on the generated images
-    for idx, filename in enumerate(tqdm(os.listdir(args.full_generated_dir))):
+    for filename in os.listdir(args.full_generated_dir):
         # verifiy the number of class in the name 
         match = re.search(r'class_(\d+)', filename)
         
