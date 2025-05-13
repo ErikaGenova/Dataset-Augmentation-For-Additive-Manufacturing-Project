@@ -105,8 +105,8 @@ def main():
             print(f"Doesn't exist the path of original directory: {full_original_dir}")
             sys.exit()
 
-        # create the full oath of the generated image
-        path_gen = os.path.join(args.generated_dir, args.model, args.experiment, filename)
+        # create the full path of the generated image
+        path_gen = os.path.join(args.full_generated_dir, filename)
 
         # Doesn't exist the path of generated image
         if not os.path.exists(path_gen):
