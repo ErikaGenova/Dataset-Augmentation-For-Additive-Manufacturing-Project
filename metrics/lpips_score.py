@@ -58,6 +58,13 @@ def main():
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
+    
+    # verify if the model exists
+    valid_models = ["CVAE", "VAE", "Diffusion", "GANs", "SinGAN"]
+
+    if args.model not in valid_models:
+        print(f"The model {args.model} doesn't exist. Choose either 'CVAE', 'VAE', 'Diffusion', 'GANs' or 'SinGAN'.")
+        sys.exit()
 
     # Inizialized L-PIPS model
     loss_fn = lpips.LPIPS(net='alex').to(device)
@@ -135,7 +142,7 @@ def main():
     mean_lpips = np.mean(scores)
     std_lpips = np.std(scores)
 
-    print("\nLPIPS Results")
+    print(f"\nLPIPS Results on the generated images from {args.experiment} of {args.model}")
     print(f"Mean: {mean_lpips:.4f}")
     print(f"Std:  {std_lpips:.4f}")
 
