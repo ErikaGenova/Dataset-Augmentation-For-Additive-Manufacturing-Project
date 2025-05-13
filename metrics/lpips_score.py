@@ -113,6 +113,8 @@ def main():
             print(f"Doesn't exist the path of generated image: {path_gen}")
             sys.exit()
         
+        print(f"\nImage: {path_gen}")
+        
         # pre process generated image
         generated_image = load_and_preprocess(path_gen, args).to(device)
 
@@ -133,7 +135,7 @@ def main():
 
             with torch.no_grad():
                 dist = loss_fn(original_image, generated_image).item()
-                
+
             # if previous L-PIPS is higher than the current, I change it
             if dist < min_dist:
                 min_dist = dist
