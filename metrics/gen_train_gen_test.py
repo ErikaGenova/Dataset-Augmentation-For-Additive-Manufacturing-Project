@@ -19,6 +19,25 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # import build_model
 from src.model import build_model 
 
+# Dataset for the synthetic data by VAE
+class VAESyntheticDataset(Dataset):
+    '''Custom dataset reading files and labels from lists.'''
+    def __init__(self, file_paths, labels, transform=None):
+        self.file_paths = file_paths
+        self.labels = labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.file_paths[idx]
+        label = self.labels[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
 # Dataset for the synthetic data by CVAE
 class CvaeSyntheticDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
@@ -40,6 +59,44 @@ class CvaeSyntheticDataset(Dataset):
 
 # Dataset for the synthetic data by GANs
 class GANSyntheticDataset(Dataset):
+    '''Custom dataset reading files and labels from lists.'''
+    def __init__(self, file_paths, labels, transform=None):
+        self.file_paths = file_paths
+        self.labels = labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.file_paths[idx]
+        label = self.labels[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+# Dataset for the synthetic data by Diffuson Models
+class DiffusionSyntheticDataset(Dataset):
+    '''Custom dataset reading files and labels from lists.'''
+    def __init__(self, file_paths, labels, transform=None):
+        self.file_paths = file_paths
+        self.labels = labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.file_paths[idx]
+        label = self.labels[idx]
+        image = Image.open(img_path).convert('L')  # grayscale
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+# Dataset for the synthetic data by SinGAN
+class SinGANSyntheticDataset(Dataset):
     '''Custom dataset reading files and labels from lists.'''
     def __init__(self, file_paths, labels, transform=None):
         self.file_paths = file_paths
@@ -196,16 +253,32 @@ def get_train_val_dataloaders(args):
         train_labels = [labels[i] for i in train_idx]
         val_paths = [file_paths[i] for i in val_idx]
         val_labels = [labels[i] for i in val_idx]
+
+        if args.model == "VAE":
+            # Create datasets and dataloaders
+            train_ds = VAESyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+            val_ds   = VAESyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
         
-        if(args.model == "CVAE"):
+        if args.model == "CVAE":
             # Create datasets and dataloaders
             train_ds = CvaeSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = CvaeSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
         
-        if(args.model == "GANs"):
+        if args.model == "GANs":
             # Create datasets and dataloaders
             train_ds = GANSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = GANSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+        
+        if args.model == "Diffusion":
+            # Create datasets and dataloaders
+            train_ds = DiffusionSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+            val_ds   = DiffusionSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+        
+        if args.model == "SinGAN":
+            # Create datasets and dataloaders
+            train_ds = SinGANSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
+            val_ds   = SinGANSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+
         
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
@@ -226,14 +299,25 @@ def get_test_dataloader(args):
         # get vectors of paths and labels of VAE's images
         test_paths, test_labels = get_generated_images(args)
 
+        # test dataloader with VAE
+        if args.model == "VAE":
+            test_ds = VAESyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+
         # test dataloader with CVAE
         if args.model == "CVAE":
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
-            
         
         # test dataloader with GANs
         if args.model == "GANs":
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+
+        # test dataloader with Diffusion
+        if args.model == "Diffusion":
+            test_ds = DiffusionSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+
+        # test dataloader with SinGAN
+        if args.model == "SinGAN":
+            test_ds = SinGANSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
 
     # in this case the train dataloader is created from original dataset
     else:
@@ -366,7 +450,7 @@ if __name__ == "__main__":
 
     # control if the model is correct
     if args.model not in ("CVAE", "GANs"):
-        print("Invalid model. Choose either 'CVAE' or 'GANs'")
+        print("Invalid model. Choose either 'VAE', 'CVAE', 'Diffusion', 'SinGAN' or 'GANs'")
         sys.exit()
 
     # path of the generated data based on specific model and number of experiment
