@@ -177,6 +177,9 @@ def get_train_val_dataloaders(args):
         # Create datasets and dataloaders
         train_ds = OriginalDefectDataset(train_paths, train_labels, transform=args.data_transforms['train'])
         val_ds   = OriginalDefectDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+
+        image, label = train_ds[0]
+        print("Shape original train: ", image.shape)
     
     # In this case, the training and validation dataloaders are created from the generated dataset based on the model and experiment
     else:
@@ -201,11 +204,15 @@ def get_train_val_dataloaders(args):
             # Create datasets and dataloaders
             train_ds = CvaeSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = CvaeSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+            image, label = train_ds[0]
+            print("Shape CVAE train: ", image.shape)
         
         if(args.model == "GANs"):
             # Create datasets and dataloaders
             train_ds = GANSyntheticDataset(train_paths, train_labels, transform=args.data_transforms['train'])
             val_ds   = GANSyntheticDataset(val_paths, val_labels, transform=args.data_transforms['val'])
+            image, label = train_ds[0]
+            print("Shape GANs train: ", image.shape)
         
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
@@ -229,11 +236,15 @@ def get_test_dataloader(args):
         # test dataloader with CVAE
         if args.model == "CVAE":
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+            image, label = test_ds[0]
+            print("Shape CVAE test: ", image.shape)
             
         
         # test dataloader with GANs
         if args.model == "GANs":
             test_ds = CvaeSyntheticDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+            image, label = test_ds[0]
+            print("Shape GANs test: ", image.shape)
 
     # in this case the train dataloader is created from original dataset
     else:
@@ -241,6 +252,8 @@ def get_test_dataloader(args):
         test_paths, test_labels = get_original_images(args)
         
         test_ds = OriginalDefectDataset(test_paths, test_labels, transform=args.data_transforms['val'])
+        image, label = test_ds[0]
+        print("Shape original test: ", image.shape)
     
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 

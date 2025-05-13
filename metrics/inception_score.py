@@ -121,13 +121,20 @@ def inception_score(imgs, cuda=True, batch_size=32, splits=1):
     for k in range(splits):
         # Divide predictions into splits
         part = preds[k * (N // splits): (k+1) * (N // splits), :]
-        py = np.mean(part, axis=0)  # Compute the marginal probability p(y)
+
+        # Compute the marginal probability p(y). If it is concentrated in many classes -> the images are diversity
+        py = np.mean(part, axis=0)  
+        
         scores = []
 
         # Compute KL divergence for each image in the split
         for i in range(part.shape[0]):
-            pyx = part[i, :]  # Get p(y|x) for each image
-            scores.append(entropy(pyx, py))  # Compute KL divergence
+            # Get p(y|x) for each image. If p(y|x) is concentrated in a few classes -> the images are realistics
+            pyx = part[i, :]  
+
+            # Compute KL divergence
+            scores.append(entropy(pyx, py))  
+
         split_scores.append(np.exp(np.mean(scores)))  # Compute exponential of mean KL divergence
 
     # Return the mean and standard deviation of the scores
