@@ -120,7 +120,7 @@ def get_transformations(args):
 
     # Verifica se sono presenti immagini
     if not all_images:
-        raise FileNotFoundError(f"Nessuna immagine trovata in {args.dir_generated}")
+        raise FileNotFoundError(f"No images found in {args.dir_generated}")
 
     # Prendi il primo file immagine
     first_image_path = all_images[0]

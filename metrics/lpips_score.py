@@ -1,4 +1,7 @@
 import os
+import re
+import sys
+import glob
 import argparse
 import torch
 import lpips
@@ -7,42 +10,126 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
 
-def load_and_preprocess(image_path):
-    img = Image.open(image_path).convert('RGB')
-    transform = transforms.Compose([
-        transforms.Resize((256, 256)), 
+# get transformations to have size 
+def get_transformations(args):
+    # Estensioni dei file immagine da considerare
+    image_extensions = ('*.png', '*.jpg', '*.jpeg')
+
+    # Lista di tutti i file immagine
+    all_images = []
+    for ext in image_extensions:
+        all_images.extend(glob.glob(os.path.join(args.full_generated_dir, ext)))
+
+    # Verifica se sono presenti immagini
+    if not all_images:
+        raise FileNotFoundError(f"No images found in {args.full_generated_dir}")
+
+    # Prendi il primo file immagine
+    first_image_path = all_images[0]
+
+    # Ottieni le dimensioni (larghezza, altezza) dell'immagine
+    with Image.open(first_image_path) as img:
+        original_size = img.size  # (width, height)
+
+    # Transforms for training and validation
+    data_transforms =  transforms.Compose([
+        transforms.Resize(original_size[::-1]),
         transforms.ToTensor(),
-        transforms.Normalize([0.5]*3, [0.5]*3)
+        transforms.Normalize(mean=[0.5], std=[0.5]) # standard normalization for grayscale
     ])
+
+    return data_transforms
+
+
+def load_and_preprocess(image_path, args):
+    img = Image.open(image_path).convert('RGB')
+
+    transform = args.data_transforms
+
     return transform(img).unsqueeze(0)  # Shape: [1, 3, H, W]
 
 def main():
     parser = argparse.ArgumentParser(description="Compute LPIPS between two image folders.")
-    parser.add_argument("--real_dir", type=str, required=True, help="Path to original images.")
-    parser.add_argument("--generated_dir", type=str, required=True, help="Path to generated images.")
     parser.add_argument("--cuda", action="store_true", help="Use GPU if available.")
+    parser.add_argument("--original_dir", type=str, required=True, help="Path to original images.", default="/content/images/original/")
+    parser.add_argument("--generated_dir", type=str, required=True, help="Path to generated images.")
+    parser.add_argument("--model", type=str, required=True, help="Model name (GANs, CVAE, VAE or Diffusion)")
+    parser.add_argument("--experiment", type=str, required=True, help="Number of the experiment.")
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
 
-    # Inizializza modello LPIPS
+    # Inizialized L-PIPS model
     loss_fn = lpips.LPIPS(net='alex').to(device)
 
     scores = []
-    for filename in tqdm(os.listdir(args.real_dir)):
-        path_real = os.path.join(args.real_dir, filename)
+
+    # generate the full path of generated images
+    args.full_generated_dir = os.path.join(args.generated_dir, args.model, args.experiment)
+
+    # verify if it exists or not
+    if not os.path.exists(args.full_generated_dir):
+        print(f"Doesn't exist the path of generated images: {args.full_generated_dir}")
+        sys.exit()
+
+    # define data_trasforms
+    args.data_trasforms = get_transformations(args)
+
+    # iterate on the generated images
+    for idx, filename in enumerate(tqdm(os.listdir(args.full_generated_dir))):
+        # verifiy the number of class in the name 
+        match = re.search(r'class_(\d+)', filename)
+        
+        if match:
+            class_id = int(match.group(1))
+            if class_id == 0: # NoDefects
+                full_original_dir = os.path.join(args.original_dir, "NoDefects")
+            elif class_id == 1: #Defects
+                full_original_dir = os.path.join(args.original_dir, "Defects")
+            else:
+                print("Don't recognize the class")
+                sys.exit()
+        else:
+            print(f"filename {filename} hasn't the class number in the name")
+            sys.exit()     
+
+        # Doesn't exist the path of original directory
+        if not os.path.exists(full_original_dir):
+            print(f"Doesn't exist the path of original directory: {full_original_dir}")
+            sys.exit()
+
+        # create the full oath of the generated image
         path_gen = os.path.join(args.generated_dir, filename)
 
+        # Doesn't exist the path of generated image
         if not os.path.exists(path_gen):
-            continue
+            print(f"Doesn't exist the path of generated image: {path_gen}")
+            sys.exit()
+        
+        # pre process generated image
+        generated_image = load_and_preprocess(path_gen, args).to(device)
+        print(f"Shape of generated image: {generated_image.shape}")
 
-        img0 = load_and_preprocess(path_real).to(device)
-        img1 = load_and_preprocess(path_gen).to(device)
+        # iterate on all original images
+        for filename in tqdm(os.listdir(full_original_dir)):
+            # create the full oath of the generated image
+            path_original = os.path.join(full_original_dir, filename)
 
-        with torch.no_grad():
-            dist = loss_fn(img0, img1).item()
-        print(f"{filename}: {dist:.4f}")
-        scores.append(dist)
+            # Doesn't exist the path of original image
+            if not os.path.exists(path_original):
+                print(f"Doesn't exist the path of generated image: {path_gen}")
+                sys.exit()
+            
+            # pre process original image
+            original_image = load_and_preprocess(path_original, args).to(device)
+            print(f"Shape of original image: {original_image.shape}")
+
+            with torch.no_grad():
+                dist = loss_fn(original_image, generated_image).item()
+            print(f"{filename}: {dist:.4f}")
+        # if current L-PIPS is higher than 
+        if scores[idx] > dist:
+            scores.append(dist)
 
 
     mean_lpips = np.mean(scores)
