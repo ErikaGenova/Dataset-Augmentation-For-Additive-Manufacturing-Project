@@ -134,9 +134,9 @@ def main():
             with torch.no_grad():
                 dist = loss_fn(original_image, generated_image).item()
             print(f"{filename}: {dist:.4f}")
-        # if current L-PIPS is higher than 
-        if scores[idx] > dist:
-            scores.append(dist)
+            # if current L-PIPS is higher than 
+            if scores[idx] > dist:
+                scores.append(dist)
 
 
     mean_lpips = np.mean(scores)
