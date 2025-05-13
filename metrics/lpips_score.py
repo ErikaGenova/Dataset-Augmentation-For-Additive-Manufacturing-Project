@@ -115,7 +115,6 @@ def main():
         
         # pre process generated image
         generated_image = load_and_preprocess(path_gen, args).to(device)
-        print(f"Shape of generated image: {generated_image.shape}")
 
         min_dist = float('inf')  # inizializza il minimo
 
@@ -131,7 +130,6 @@ def main():
             
             # pre process original image
             original_image = load_and_preprocess(path_original, args).to(device)
-            print(f"Shape of original image: {original_image.shape}")
 
             with torch.no_grad():
                 dist = loss_fn(original_image, generated_image).item()
