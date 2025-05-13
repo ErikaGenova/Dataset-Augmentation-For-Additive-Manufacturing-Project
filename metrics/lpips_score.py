@@ -140,6 +140,7 @@ def main():
             if dist < min_dist:
                 min_dist = dist
         
+        print(f"lpips: {min_dist}\n")
         scores.append(min_dist)
 
     mean_lpips = np.mean(scores)
