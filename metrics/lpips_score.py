@@ -117,6 +117,8 @@ def main():
         generated_image = load_and_preprocess(path_gen, args).to(device)
         print(f"Shape of generated image: {generated_image.shape}")
 
+        min_dist = float('inf')  # inizializza il minimo
+
         # iterate on all original images
         for filename in tqdm(os.listdir(full_original_dir)):
             # create the full oath of the generated image
@@ -134,10 +136,11 @@ def main():
             with torch.no_grad():
                 dist = loss_fn(original_image, generated_image).item()
             print(f"{filename}: {dist:.4f}")
-            # if current L-PIPS is higher than 
-            if scores[idx] > dist:
-                scores.append(dist)
-
+            # if previous L-PIPS is higher than the current, I change it
+            if dist < min_dist:
+                min_dist = dist
+        
+        scores.append(min_dist)
 
     mean_lpips = np.mean(scores)
     std_lpips = np.std(scores)
