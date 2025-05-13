@@ -20,10 +20,10 @@ def main():
     parser = argparse.ArgumentParser(description="Compute LPIPS between two image folders.")
     parser.add_argument("--real_dir", type=str, required=True, help="Path to original images.")
     parser.add_argument("--generated_dir", type=str, required=True, help="Path to generated images.")
-    parser.add_argument("--use_gpu", action="store_true", help="Use GPU if available.")
+    parser.add_argument("--cuda", action="store_true", help="Use GPU if available.")
     args = parser.parse_args()
 
-    device = torch.device("cuda" if args.use_gpu and torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
 
     # Inizializza modello LPIPS
     loss_fn = lpips.LPIPS(net='alex').to(device)
