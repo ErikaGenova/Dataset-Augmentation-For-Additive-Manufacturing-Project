@@ -151,8 +151,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # control if the model is correct
-    if args.model not in ("original", "CVAE", "GANs"):
-        print("Invalid model. Choose either 'original' or 'CVAE' or 'GANs'")
+    if args.model not in ("original", "VAE", "CVAE", "GANs", "Diffusion", "SinGAN"):
+        print("Invalid model. Choose either 'original', 'VAE', 'CVAE', 'GANs', 'Diffusion' or 'SinGAN'")
         sys.exit()
 
     if args.model == "original":
