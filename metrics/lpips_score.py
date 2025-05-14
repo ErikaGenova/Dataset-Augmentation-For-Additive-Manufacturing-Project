@@ -147,8 +147,7 @@ def main():
     std_lpips = np.std(scores)
 
     print(f"\nLPIPS Results on the generated images from {args.experiment} of {args.model}")
-    print(f"Mean: {mean_lpips:.4f}")
-    print(f"Std:  {std_lpips:.4f}")
+    print(f"L-PIPS: {mean_lpips:.4f} ± {std_lpips:.4f}")
 
 if __name__ == "__main__":
     main()
