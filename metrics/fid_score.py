@@ -5,10 +5,12 @@ import torch
 from pytorch_fid import fid_score
 import shutil
 import tempfile
+from PIL import Image
 
 def select_class_images(real_dir, synthetic_dir, class_name):
     """
     Selects the correct sub-folder for real images and filters synthetic images by class.
+    Resizes all selected images to 299x299 and saves them in temporary folders.
 
     Args:
         real_dir (str): Path to the real images root folder.
@@ -16,7 +18,7 @@ def select_class_images(real_dir, synthetic_dir, class_name):
         class_name (str): 'NoDefects' or 'Defects'.
 
     Returns:
-        Tuple[str, str]: (path to real class folder, path to temporary synthetic class folder)
+        Tuple[str, str]: (path to temp real class folder, path to temp synthetic class folder)
     """
     # Map class name to class id
     class_map = {'NoDefects': '0', 'Defects': '1'}
@@ -31,19 +33,37 @@ def select_class_images(real_dir, synthetic_dir, class_name):
     if not os.path.isdir(real_class_dir):
         raise FileNotFoundError(f"Real class folder not found: {real_class_dir}")
 
-    # Create temp dir for filtered synthetic images
-    temp_synth_dir = tempfile.mkdtemp(prefix=f"synthetic_{class_name}_")
+    # Create temp dirs for resized real and synthetic images to avoid overwriting existing files
+    temp_real_dir = tempfile.mkdtemp(prefix=f"real_{class_name}_resized_")
+    temp_synth_dir = tempfile.mkdtemp(prefix=f"synthetic_{class_name}_resized_")
 
-    # Filter synthetic images by class id in filename (e.g., *_1.png for Defects)
+    # Resize and copy real images
+    for fname in os.listdir(real_class_dir):
+        if fname.endswith('.png') or fname.endswith('.jpg'):
+            src = os.path.join(real_class_dir, fname)
+            dst = os.path.join(temp_real_dir, fname)
+            try:
+                with Image.open(src) as img:
+                    img = img.resize((299, 299), Image.LANCZOS)
+                    img.save(dst)
+            except Exception as e:
+                print(f"Could not process real image {fname}: {e}")
+
+    # Filter, resize, and copy synthetic images by class id in filename (e.g., *_1.png for Defects)
     for fname in os.listdir(synthetic_dir):
         if fname.endswith('.png') or fname.endswith('.jpg'):
             name, _ = os.path.splitext(fname)
             if name.endswith(f"_{class_id}"):
                 src = os.path.join(synthetic_dir, fname)
                 dst = os.path.join(temp_synth_dir, fname)
-                shutil.copy2(src, dst)
+                try:
+                    with Image.open(src) as img:
+                        img = img.resize((299, 299), Image.LANCZOS)
+                        img.save(dst)
+                except Exception as e:
+                    print(f"Could not process synthetic image {fname}: {e}")
 
-    return real_class_dir, temp_synth_dir
+    return temp_real_dir, temp_synth_dir
 
 def compute_fid_score(real_dir, generated_dir, class_name, use_gpu=True, batch_size=4):
     """
