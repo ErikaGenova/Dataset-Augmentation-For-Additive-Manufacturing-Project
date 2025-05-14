@@ -3,8 +3,49 @@ import argparse
 import numpy as np
 import torch
 from pytorch_fid import fid_score
+import shutil
+import tempfile
 
-def fid_score(real_dir, generated_dir, use_gpu=True, batch_size=4):
+def select_class_images(real_dir, synthetic_dir, class_name):
+    """
+    Selects the correct sub-folder for real images and filters synthetic images by class.
+
+    Args:
+        real_dir (str): Path to the real images root folder.
+        synthetic_dir (str): Path to the synthetic images folder.
+        class_name (str): 'NoDefects' or 'Defects'.
+
+    Returns:
+        Tuple[str, str]: (path to real class folder, path to temporary synthetic class folder)
+    """
+    # Map class name to class id
+    class_map = {'NoDefects': '0', 'Defects': '1'}
+    if class_name not in class_map:
+        raise ValueError("class_name must be 'NoDefects' or 'Defects'")
+
+    class_id = class_map[class_name]
+
+    # Path to real images subfolder
+    real_class_dir = os.path.join(real_dir, class_name)
+    print(f"Real class directory: {real_class_dir}")
+    if not os.path.isdir(real_class_dir):
+        raise FileNotFoundError(f"Real class folder not found: {real_class_dir}")
+
+    # Create temp dir for filtered synthetic images
+    temp_synth_dir = tempfile.mkdtemp(prefix=f"synthetic_{class_name}_")
+
+    # Filter synthetic images by class id in filename (e.g., *_1.png for Defects)
+    for fname in os.listdir(synthetic_dir):
+        if fname.endswith('.png') or fname.endswith('.jpg'):
+            name, _ = os.path.splitext(fname)
+            if name.endswith(f"_{class_id}"):
+                src = os.path.join(synthetic_dir, fname)
+                dst = os.path.join(temp_synth_dir, fname)
+                shutil.copy2(src, dst)
+
+    return real_class_dir, temp_synth_dir
+
+def compute_fid_score(real_dir, generated_dir, class_name, use_gpu=True, batch_size=4):
     """
     Calculate the FID score between real and generated images.
     
@@ -17,6 +58,10 @@ def fid_score(real_dir, generated_dir, use_gpu=True, batch_size=4):
     Returns:
         float: The FID score.
     """
+
+    # Take only the desired class images
+    real_dir, generated_dir = select_class_images(real_dir, generated_dir, class_name)
+
     device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
     fid = fid_score.calculate_fid_given_paths(
         [real_dir, generated_dir],
@@ -32,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("--generated_dir", type=str, required=True, help="Path to generated images.")
     parser.add_argument("--use_gpu", action="store_true", help="Use GPU if available.")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for FID calculation.")
+    parser.add_argument("--class_name", type=str, choices=['NoDefects', 'Defects'], required=True, help="Class name to compute FID for.")
     args = parser.parse_args()
 
     # Check if the directories exist
@@ -50,5 +96,5 @@ if __name__ == "__main__":
         exit(1)
     
     # Calculate FID score
-    fid = fid_score(args.real_dir, args.generated_dir, args.use_gpu, args.batch_size)
+    fid = compute_fid_score(args.real_dir, args.generated_dir, args.class_name, args.use_gpu, args.batch_size)
     print(f"FID score: {fid:.4f}")
