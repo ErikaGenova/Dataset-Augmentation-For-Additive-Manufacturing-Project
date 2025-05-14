@@ -30,7 +30,7 @@ def generate_single_image(pipe, image_path, output_root, prompt, negative_prompt
 
     # Construct output directory
     category = "Defects" if "Defects" in image_path else "NoDefects"
-    output_dir = os.path.join(output_root, category)
+    output_dir = output_root
     os.makedirs(output_dir, exist_ok=True)
     base_name = os.path.splitext(os.path.basename(image_path))[0]
 
@@ -45,7 +45,9 @@ def generate_single_image(pipe, image_path, output_root, prompt, negative_prompt
             num_inference_steps=num_inference_steps
         ).images[0]
 
-        out_name = f"{base_name}_aug{i+1}.png"
+        label = "0" if category == "NoDefects" else "1"
+        out_name = f"{base_name}_class_{label}.png"
+
         result.save(os.path.join(output_dir, out_name))
 
     print(f"{num_images_per_input} images generated from {image_path} → {output_dir}")
@@ -69,7 +71,9 @@ def generate_images(pipe, input_root, output_root, prompt, negative_prompt, num_
     categories = ["Defects", "NoDefects"]
     for category in categories:
         input_dir = os.path.join(input_root, category)
-        output_dir = os.path.join(output_root, category)
+        output_dir = output_root
+        os.makedirs(output_dir, exist_ok=True)
+
         os.makedirs(output_dir, exist_ok=True)
 
         for filename in os.listdir(input_dir):
@@ -98,7 +102,10 @@ def generate_images(pipe, input_root, output_root, prompt, negative_prompt, num_
                     num_inference_steps=num_inference_steps
                 ).images[0]
 
-                out_name = f"{os.path.splitext(filename)[0]}_aug{i+1}.png"
+                label = "0" if category == "NoDefects" else "1"
+                base_name = os.path.splitext(filename)[0]
+                out_name = f"{base_name}_class_{label}.png"
+
                 out_path = os.path.join(output_dir, out_name)
                 result.save(out_path)
 
