@@ -102,7 +102,7 @@ def generate_images(pipe, input_root, output_root, prompt, negative_prompt, num_
 
                 label = "0" if category == "NoDefects" else "1"
                 base_name = os.path.splitext(filename)[0]
-                out_name = f"{base_name}_class_{label}.png"
+                out_name = f"{base_name}_{i}_class_{label}.png"
 
                 out_path = os.path.join(output_dir, out_name)
                 result.save(out_path)
