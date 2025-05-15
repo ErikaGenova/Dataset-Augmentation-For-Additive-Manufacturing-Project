@@ -46,7 +46,7 @@ def generate_single_image(pipe, image_path, output_root, prompt, negative_prompt
         ).images[0]
 
         label = "0" if category == "NoDefects" else "1"
-        out_name = f"{base_name}_class_{label}.png"
+        out_name = f"{base_name}_{i}_class_{label}.png"
 
         result.save(os.path.join(output_dir, out_name))
 
