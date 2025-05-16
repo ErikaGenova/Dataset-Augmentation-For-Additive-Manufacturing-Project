@@ -282,7 +282,6 @@ def get_train_val_dataloaders(args):
         
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    
     return train_loader, val_loader
 
 # get only test dataloader
