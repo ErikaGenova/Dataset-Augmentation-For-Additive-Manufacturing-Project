@@ -16,84 +16,93 @@ class Vae(nn.Module):
         super(Vae, self).__init__()
         self.latent_size = latent_size
 
-        # For encode
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
+        # Encoder: four conv layers
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2, padding=2)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2)
+        self.conv4 = nn.Conv2d(64, 128, kernel_size=5, stride=2, padding=2)
 
-        # Dynamically compute the flattened size after convolutions
-        conv1_output_size = compute_conv_output_size(image_size, kernel_size=5, stride=2)
-        conv2_output_size = compute_conv_output_size(conv1_output_size, kernel_size=5, stride=2)
-        self.flattened_size = conv2_output_size * conv2_output_size * 32
+        # Compute flattened size dynamically
+        s1 = compute_conv_output_size(image_size, 5, 2, padding=2)
+        s2 = compute_conv_output_size(s1, 5, 2, padding=2)
+        s3 = compute_conv_output_size(s2, 5, 2, padding=2)
+        s4 = compute_conv_output_size(s3, 5, 2, padding=2)
+        self.flattened_size = s4 * s4 * 128
 
-        self.linear1 = nn.Linear(self.flattened_size, 300)
-        self.mu = nn.Linear(300, self.latent_size)
-        self.logvar = nn.Linear(300, self.latent_size)
+        # Bottleneck
+        self.fc1 = nn.Linear(self.flattened_size, 512)
+        self.mu = nn.Linear(512, self.latent_size)
+        self.logvar = nn.Linear(512, self.latent_size)
 
-        # For decoder
-        self.linear2 = nn.Linear(self.latent_size, 300)
-        self.linear3 = nn.Linear(300, self.flattened_size)
-        self.conv3 = nn.ConvTranspose2d(32, 16, kernel_size=5, stride=2)
-        self.conv4 = nn.ConvTranspose2d(16, 1, kernel_size=5, stride=2)
-        self.conv5 = nn.ConvTranspose2d(1, 1, kernel_size=4)
+        # Decoder
+        self.fc2 = nn.Linear(self.latent_size, 512)
+        self.fc3 = nn.Linear(512, self.flattened_size)
+        self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding=2, output_padding=1)
+        self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2, padding=2, output_padding=1)
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=5, stride=2, padding=2, output_padding=1)
+        self.deconv4 = nn.ConvTranspose2d(16, 1, kernel_size=5, stride=2, padding=2, output_padding=1)
 
     def encoder(self, x):
         t = F.relu(self.conv1(x))
         t = F.relu(self.conv2(t))
-        t = t.reshape((x.shape[0], -1))
-        t = F.relu(self.linear1(t))
+        t = F.relu(self.conv3(t))
+        t = F.relu(self.conv4(t))
+        t = t.view(x.size(0), -1)
+        t = F.relu(self.fc1(t))
         mu = self.mu(t)
         logvar = self.logvar(t)
         return mu, logvar
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std).to(device)
-        return eps * std + mu
+        eps = torch.randn_like(std)
+        return mu + eps * std
 
-    def unFlatten(self, x):
-        # Compute the height and width dynamically
-        conv2_output_size = int((self.flattened_size // 32) ** 0.5)
-        return x.reshape((x.shape[0], 32, conv2_output_size, conv2_output_size))
+    def unflatten(self, x):
+        size = int((self.flattened_size // 128) ** 0.5)
+        return x.view(x.size(0), 128, size, size)
 
     def decoder(self, z):
-        t = F.relu(self.linear2(z))
-        t = F.relu(self.linear3(t))
-        t = self.unFlatten(t)
-        t = F.relu(self.conv3(t))
-        t = F.relu(self.conv4(t))
-        t = F.relu(self.conv5(t))
+        t = F.relu(self.fc2(z))
+        t = F.relu(self.fc3(t))
+        t = self.unflatten(t)
+        t = F.relu(self.deconv1(t))
+        t = F.relu(self.deconv2(t))
+        t = F.relu(self.deconv3(t))
+        t = torch.sigmoid(self.deconv4(t))
         return t
 
-    def forward(self, x, y):
+    def forward(self, x, y=None):
         mu, logvar = self.encoder(x)
         z = self.reparameterize(mu, logvar)
-        pred = self.decoder(z)
-        return pred, mu, logvar
+        recon = self.decoder(z)
+        return recon, mu, logvar
+
 
 
 def compute_conv_output_size(input_size, kernel_size, stride, padding=0):
     return (input_size - kernel_size + 2 * padding) // stride + 1
 
 
-def plot(epoch, pred, y):
-    if not os.path.isdir('./images'):
-        os.mkdir('./images')
-    fig = plt.figure(figsize=(16,16))
+def plot(epoch, recon, x):
+    os.makedirs('images', exist_ok=True)
+    fig, axes = plt.subplots(2, 4, figsize=(12, 6))
     for i in range(4):
-        ax = fig.add_subplot(3,2,i+1)
-        ax.imshow(pred[i,0],cmap='gray')
-        ax.axis('off')
-        ax.title.set_text(str(y[i]))
-    plt.savefig("./images/epoch_{}.jpg".format(epoch))
-    # plt.figure(figsize=(10,10))
-    # plt.imsave("./images/pred_{}.jpg".format(epoch), pred[0,0], cmap='gray')
-    plt.close()
+        axes[0, i].imshow(x[i, 0], cmap='gray')
+        axes[0, i].axis('off')
+        axes[0, i].set_title('Input')
+        axes[1, i].imshow(recon[i, 0], cmap='gray')
+        axes[1, i].axis('off')
+        axes[1, i].set_title('Reconstruction')
+    plt.tight_layout()
+    plt.savefig(f'images/epoch_{epoch}.png')
+    plt.close(fig)
 
 
-def loss_function(x, pred, mu, logvar):
-    recon_loss = F.mse_loss(pred, x, reduction='sum')
-    kld = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
+def loss_function(x, recon, mu, logvar):
+    recon_loss = F.mse_loss(recon, x, reduction='sum')
+    kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return recon_loss, kld
 
 
@@ -114,14 +123,6 @@ def train(epoch, model, train_loader, optim):
             total_loss += loss.cpu().data.numpy()*x.shape[0]
             reconstruction_loss += recon_loss.cpu().data.numpy()*x.shape[0]
             kld_loss += kld.cpu().data.numpy()*x.shape[0]
-            # if i == 0:
-            #     print("Gradients")
-            #     for name,param in model.named_parameters():
-            #         if "bias" in name:
-            #             print(name,param.grad[0],end=" ")
-            #         else:
-            #             print(name,param.grad[0,0],end=" ")
-            #         print()
         except Exception as e:
             traceback.print_exe()
             torch.cuda.empty_cache()
@@ -147,9 +148,7 @@ def test(epoch, model, test_loader):
                 reconstruction_loss += recon_loss.cpu().data.numpy()*x.shape[0]
                 kld_loss += kld.cpu().data.numpy()*x.shape[0]
                 if i == 0:
-                    # print("gr:", x[0,0,:5,:5])
-                    # print("pred:", pred[0,0,:5,:5])
-                    plot(epoch, pred.cpu().data.numpy(), y.cpu().data.numpy())
+                    plot(epoch, pred.cpu().data.numpy(), x.cpu().data.numpy())
             except Exception as e:
                 traceback.print_exe()
                 torch.cuda.empty_cache()
@@ -162,12 +161,6 @@ def test(epoch, model, test_loader):
 
 
 def load_data(data_dir, batch_size, num_workers, image_size):
-    # transform = torchvision.transforms.Compose([
-    #                            torchvision.transforms.ToTensor()])
-    # train_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=True, download=True,
-    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    # test_loader = torch.utils.data.DataLoader(torchvision.datasets.MNIST('./data/', train=False, download=True,
-    #                          transform=transform),batch_size=batch_size, num_workers=num_workers, shuffle=True)
     train_loader, test_loader = get_dataloaders(
         data_dir=data_dir,
         batch_size=batch_size,
