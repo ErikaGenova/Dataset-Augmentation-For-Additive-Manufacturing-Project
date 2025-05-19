@@ -18,36 +18,22 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
+[![Team](https://img.shields.io/badge/team-project_AM04_group_AM01-blue.svg?style=for-the-badge)](https://github.com/orgs/MLinApp-polito/teams/project-am04_group-am01)
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
+[![Issues][issues-shield]][issues-shield]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
-
 
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
 
-<h3 align="center">project_title</h3>
+<h3 align="center">2025/AM04 – Dataset Augmentation for
+Additive Manufacturing defect detection</h3>
 
-  <p align="center">
-    project_description
-    <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues">Request Feature</a>
-  </p>
 </div>
 
 
@@ -59,22 +45,23 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#dataset-structure">Dataset structure</a></li>
+        <li><a href="#technologies-and-models-used">Technologies and Models Used</a></li>
+        <li><a href="#functional-specification">Functional Specification</a></li>
       </ul>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
+      <a href="#guide">Guide</a>
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#contacts">Contacts</a></li>
+    <li><a href="#references">References</a></li>
   </ol>
 </details>
 
@@ -82,36 +69,59 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
+<p  align="center">
+  <img src="https://i.ibb.co/ffwLDDn/Additive-Manufaturing.png" alt="Additive Manufacturing" width="300" />
+</p>
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+Metal Additive Manufacturing (AM) is a pillar of the Industry 4.0, with many attractive advantages compared to traditional subtractive fabrication technologies. However, there are many quality issues that can be an obstacle for mass production. In this context, the use of Generative Models algorithms have a very important role. Nonetheless, they are up to this date limited by the scarcity of data for the training, as well as by the difficulty of accessing and integrating the AM process data throughout the fabrication. To tackle this problem, an generative model algorithm is required to increase the number of images available to train the classifier on the generated dataset. 
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email`, `email_client`, `project_title`, `project_description`
+The category of defects addressed are the following:
+
+1. **Holes**: localised lacks of metallic powder that create small dark areas in the powder bed image. They are generally due to a bad regulation of the powder dosing factor, leading to local lacks of powder.
+2. **Spattering**: droplets of melted metal ejected from the melt pool and landed in the surroundings.
+3. **Incandescence**: high-intensity areas in the powder bed layer. It is generally a consequence of the inability of the melt pool to cool down correctly, due to an excess of laser energy power.
+4. **Horizontal defects**: dark horizontal lines in the layer image caused by geometric imperfection of the piece that leads to the incorrect spreading of the metallic powder.
+5. **Vertical defects**: vertical undulation of the powder bed along the direction of the recoater’s path, consisting in alternated dark and light lines. The origin is either a mechanical defect of the recoater’s surface or a mechanical interference between the object and the recoater.
+
+In the following image is reported an example of the defects.
+<p align="center">
+  <img src="https://i.ibb.co/0yPGZL7r/Defects-Examples.png" alt="Examples of Defects" width=600 />
+</p>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+### Dataset structure
+
+The dataset is composed of two folders:
+  - **Defects**: contains a set of images with several defects like holes, splattering, etc. They consist of 47 images of different layers with one or multiple defects in each of them without labeling
+  - **NoDefects**: contains plain images of the powder bed without defects. They consists of 33 images without defects
 
 
-### Built With
+### Technologies and Models Used
 
-* [Next.js](https://nextjs.org/)
-* [React.js](https://reactjs.org/)
-* [Vue.js](https://vuejs.org/)
-* [Angular](https://angular.io/)
-* [Svelte](https://svelte.dev/)
-* [Laravel](https://laravel.com)
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
+- Python
+- PyTorch
+- Variational Autoencoders (VAE)
+- Conditional VAEs (CVAE)
+- Generative Adversarial Networks (GANs)
+- SinGAN
+- Diffusion Models
+- Evaluation Metrics: FID, L-PIPS, IS, GEN with training set and GEN with test set
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
 
 ### Functional Specification
 
-Here's a Short description of what is the focus of your application.
+This application focuses on generating synthetic datasets for the Additive Manufacturing domain.  
+Its main purpose is to overcome the scarcity of defective samples by using generative models such as Variational Autoencoders (VAE), Conditional VAEs (CVAE), Generative Adversarial Networks (GANs), and Diffusion Models.
+
+The generated images are used to train classifiers for defect detection, improving performance despite the limited size of the original dataset.
+
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+## Guide
 
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
@@ -155,20 +165,6 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 
 
-<!-- ROADMAP -->
-## Roadmap
-
-- [] Feature 1
-- [] Feature 2
-- [] Feature 3
-    - [] Nested Feature
-
-See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -190,14 +186,16 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+This project is distributed under the BSD 3-Clause License, a permissive open-source license that allows you to freely use, modify, and distribute the code, even for commercial purposes, as long as you include the original copyright notice and disclaimers. It does not provide any warranty.
+
+For more details, please refer to the `LICENSE.txt` file.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
-<!-- CONTACT -->
-## Contact
+<!-- CONTACTS -->
+## Contacts
 
 Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
 
@@ -207,12 +205,9 @@ Project Link: [https://github.com/github_username/repo_name](https://github.com/
 
 
 
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+<!-- REFERENCES -->
+## References
 
-* []()
-* []()
-* []()
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
