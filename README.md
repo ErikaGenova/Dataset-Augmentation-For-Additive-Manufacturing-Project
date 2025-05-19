@@ -1,74 +1,32 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=19272568&assignment_repo_type=AssignmentRepo)
-<div id="top"></div>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
 
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Team](https://img.shields.io/badge/team-project_AM04_group_AM01-blue.svg?style=for-the-badge)](https://github.com/orgs/MLinApp-polito/teams/project-am04_group-am01)
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-shield]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-
-<h3 align="center">2025/AM04 – Dataset Augmentation for
+<h2>2025/AM04 – Dataset Augmentation for
 Additive Manufacturing defect detection</h3>
 
-</div>
 
-
+---
 
 <!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#dataset-structure">Dataset structure</a></li>
-        <li><a href="#technologies-and-models-used">Technologies and Models Used</a></li>
-        <li><a href="#functional-specification">Functional Specification</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#guide">Guide</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contacts">Contacts</a></li>
-    <li><a href="#references">References</a></li>
-  </ol>
-</details>
+
+### Table of Contents
+
+1. [About The Project](#about-the-project)
+   - [Dataset Structure](#dataset-structure)
+   - [Technologies and Models Used](#technologies-and-models-used)
+   - [Functional Specification](#functional-specification)
+2. [Guide](#guide)
+   - [Notebook Structure](#notebook-structure)
+   - [Usage](#usage)
+3. [Contributing](#contributing)
+4. [License](#license)
+5. [Contacts](#contacts)
+6. [References](#references)
 
 
+
+---
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+### About The Project
 <p  align="center">
   <img src="https://i.ibb.co/ffwLDDn/Additive-Manufaturing.png" alt="Additive Manufacturing" width="300" />
 </p>
@@ -88,16 +46,15 @@ In the following image is reported an example of the defects.
   <img src="https://i.ibb.co/0yPGZL7r/Defects-Examples.png" alt="Examples of Defects" width=600 />
 </p>
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-### Dataset structure
+#### Dataset structure
 
 The dataset is composed of two folders:
   - **Defects**: contains a set of images with several defects like holes, splattering, etc. They consist of 47 images of different layers with one or multiple defects in each of them without labeling
   - **NoDefects**: contains plain images of the powder bed without defects. They consists of 33 images without defects
 
 
-### Technologies and Models Used
+#### Technologies and Models Used
 
 - Python
 - PyTorch
@@ -109,53 +66,53 @@ The dataset is composed of two folders:
 - Evaluation Metrics: FID, L-PIPS, IS, GEN with training set and GEN with test set
 
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-### Functional Specification
+#### Functional Specification
 
 This application focuses on generating synthetic datasets for the Additive Manufacturing domain.  
 Its main purpose is to overcome the scarcity of defective samples by using generative models such as Variational Autoencoders (VAE), Conditional VAEs (CVAE), Generative Adversarial Networks (GANs), and Diffusion Models.
 
 The generated images are used to train classifiers for defect detection, improving performance despite the limited size of the original dataset.
 
-
-
-<!-- GETTING STARTED -->
-## Guide
-
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
-### Installation
-
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/github_username/repo_name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
-
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+---
+
+
+<!-- GUIDE -->
+### Guide
+
+The following guide provides step-by-step instructions to navigate and use the Colab notebook, which covers all stages of the project: data preparation, model training, image generation, and evaluation.  
+The notebook is located in the `src` folder, called `defect_detection.ipynb`.
+
+#### Notebook Structure
+
+The notebook is organized into the following main sections:
+
+- **Before Starting**
+  - Clone the repository
+  - Install dependencies
+  - Import libraries
+
+- **Classifier on Original Dataset**
+  - Training without augmentation
+  - Training with basic augmentation
+
+- **Generative Models**
+  - SinGAN
+  - GANs
+  - Diffusion Models
+  - Conditional VAE (CVAE)
+  - VAE
+
+- **Evaluation Metrics**
+  - L-PIPS (Learned Perceptual Image Patch Similarity)
+  - FID (Fréchet Inception Distance)
+  - IS (Inception Score)
+  - GEN (evaluated on training and test sets)
 
 
 <!-- USAGE EXAMPLES -->
-## Usage
+#### Usage
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
 
@@ -164,9 +121,10 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+---
 
 <!-- CONTRIBUTING -->
-## Contributing
+### Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
@@ -182,9 +140,10 @@ Don't forget to give the project a star! Thanks again!
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+---
 
 <!-- LICENSE -->
-## License
+### License
 
 This project is distributed under the BSD 3-Clause License, a permissive open-source license that allows you to freely use, modify, and distribute the code, even for commercial purposes, as long as you include the original copyright notice and disclaimers. It does not provide any warranty.
 
@@ -193,21 +152,22 @@ For more details, please refer to the `LICENSE.txt` file.
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+---
 
 <!-- CONTACTS -->
-## Contacts
+### Contacts
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
-
-Project Link: [https://github.com/github_username/repo_name](https://github.com/github_username/repo_name)
+Ponzuoli Giacomo - s332271@studenti.polito.it
+Modi Giorgia - s330519@studenti.polito.it
+Genova Erika - s332044@studenti.polito.it
+Ammirati Marco - s300269@studenti.polito.it
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-
+---
 
 <!-- REFERENCES -->
-## References
-
+### References
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
