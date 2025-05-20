@@ -28,6 +28,9 @@ if __name__ == '__main__':
     
     # generate the directory to save the results
     dir2save = functions.generate_dir2save(opt)
+    print('dir2save: %s' % dir2save)
+
+
     if dir2save is None:
         print('task does not exist')
     elif (os.path.exists(dir2save)):
@@ -47,7 +50,8 @@ if __name__ == '__main__':
             functions.adjust_scales2image(real, opt)
 
             # load the trained pyramid
-            Gs, Zs, reals, NoiseAmp = functions.load_trained_pyramid(opt, opt.dir_model)
+            
+            Gs, Zs, reals, NoiseAmp = functions.load_trained_pyramid(opt, dir=opt.dir_model)
             in_s = functions.generate_in2coarsest(reals,1,1,opt)
             # generate random samples
             SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt, gen_start_scale=opt.gen_start_scale)

@@ -25,6 +25,12 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = imresize(real_, min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
     print('Image size: %d x %d' % (real_.shape[2], real_.shape[3]))
 
+    # print if the R1 penalty is used or not
+    if opt.r1_penalty == 'True':
+        print('R1 penalty is used')
+    else:
+        print('R1 penalty is not used')
+
     # Resize the image to the specified scale1
     real = imresize(real_, opt.scale1, opt)
     # Create a pyramid of images at different scales
@@ -52,7 +58,8 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
         # Create a directory to save the model and results
         opt.out_ = functions.generate_dir2save(opt)
         opt.outf = '%s/%d' % (opt.out_,scale_num)
-        
+        print('out_: %s' % (opt.out_))
+        print("outf: %s" % (opt.outf))
         try:
             os.makedirs(opt.outf)
         except OSError:
@@ -94,13 +101,10 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
                 - reals: pth of the real images
                 - NoiseAmp: pth of the noise amplitude
         """
-
-        # Last scale, save the model and results
-        if scale_num == opt.stop_scale:
-            torch.save(Zs, '%s/Zs.pth' % (opt.out_))
-            torch.save(Gs, '%s/Gs.pth' % (opt.out_))
-            torch.save(reals, '%s/reals.pth' % (opt.out_))
-            torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
+        torch.save(Zs, '%s/Zs.pth' % (opt.out_))
+        torch.save(Gs, '%s/Gs.pth' % (opt.out_))
+        torch.save(reals, '%s/reals.pth' % (opt.out_))
+        torch.save(NoiseAmp, '%s/NoiseAmp.pth' % (opt.out_))
         
         # Update the scale number and the previous number of filters
         scale_num+=1
@@ -172,8 +176,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     optimizerG = optim.Adam(netG.parameters(), lr=opt.lr_g, betas=(opt.beta1, 0.999))
     
     # setup scheduler to reduce the learning rate after a certain number of epochs
-    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[1000],gamma=opt.gamma)
-    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[1000],gamma=opt.gamma)
+    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD,milestones=[1600],gamma=opt.gamma)
+    schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG,milestones=[1600],gamma=opt.gamma)
 
     errD2plot = []
     errG2plot = []
@@ -221,7 +225,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # ============== train with real images
             netD.zero_grad()
             
-            # Enable gradient calculation respect to real images
+            # Enable gradient calculation respect to real images, which is necessary for the R1 penalty
             real.requires_grad_(True)
 
             # Discriminator evaluates real images and computes the loss
@@ -231,7 +235,21 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # This is because we want to maximize the discriminator output for real images
             errD_real = -output.mean()
 
-            errD_real.backward(retain_graph=True)
+            # If the R1 penalty is used, we need to calculate the gradients of the discriminator output with respect to the real images
+            if opt.r1_penalty == 'True':
+                # `gradients` performs the gradient of `output` with respect to `real`
+                gradients = torch.autograd.grad(
+                    outputs=output.sum(), inputs=real, create_graph=True, retain_graph=True, only_inputs=True
+                )[0]
+                # `grad_penalty` calculates the L2 norm of the gradients
+                grad_penalty = (gradients.view(gradients.size(0), -1).norm(2, dim=1) ** 2).mean()
+                # The R1 penalty is calculated as half of the gradient penalty multiplied by the `lambda_r1` parameter
+                r1_penalty = 0.5 * opt.lambda_r1 * grad_penalty  # `opt.lambda_r1` è il peso della penalità
+
+                # The total loss propagated to the discriminator is the sum of the real images loss and the R1 penalty
+                (errD_real + r1_penalty).backward(retain_graph=True)
+            else:
+                errD_real.backward(retain_graph=True)
             
             D_x = -errD_real.item()
 
@@ -408,6 +426,7 @@ def draw_concat(Gs,Zs,reals,NoiseAmp,in_s,mode,m_noise,m_image,opt):
                 #    G_z = m_image(G_z)
                 count += 1
     return G_z
+
 
 def init_models(opt):
 
