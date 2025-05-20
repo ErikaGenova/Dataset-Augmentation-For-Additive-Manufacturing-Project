@@ -96,7 +96,7 @@ def inception_score(imgs, cuda=True, batch_size=32, splits=1):
     dataloader = torch.utils.data.DataLoader(imgs, batch_size=batch_size)
 
     # Load the pretrained Inception v3 model
-    inception_model = inception_v3(weights=Inception_V3_Weights.DEFAULT, transform_input=False).type(dtype)
+    inception_model = inception_v3(weights=Inception_V3_Weights.DEFAULT, transform_input=True).type(dtype)
     inception_model.eval()  # Set the model to evaluation mode
 
     # Initialize an array to store predictions
