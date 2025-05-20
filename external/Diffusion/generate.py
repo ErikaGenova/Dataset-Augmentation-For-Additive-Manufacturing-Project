@@ -30,7 +30,7 @@ def generate_single_image(pipe, image_path, output_root, prompt, negative_prompt
 
     # Construct output directory
     category = "Defects" if "Defects" in image_path else "NoDefects"
-    output_dir = os.path.join(output_root, category)
+    output_dir = output_root
     os.makedirs(output_dir, exist_ok=True)
     base_name = os.path.splitext(os.path.basename(image_path))[0]
 
@@ -71,7 +71,9 @@ def generate_images(pipe, input_root, output_root, prompt, negative_prompt, num_
     categories = ["Defects", "NoDefects"]
     for category in categories:
         input_dir = os.path.join(input_root, category)
-        output_dir = os.path.join(output_root, category)
+        output_dir = output_root
+        os.makedirs(output_dir, exist_ok=True)
+
         os.makedirs(output_dir, exist_ok=True)
 
         for filename in os.listdir(input_dir):
