@@ -7,8 +7,9 @@ Additive Manufacturing defect detection</h3>
 
 <!-- TABLE OF CONTENTS -->
 
-### Table of Contents
+<div id="top"></div>
 
+### Table of Contents
 1. [About The Project](#about-the-project)
    - [Dataset Structure](#dataset-structure)
    - [Technologies and Models Used](#technologies-and-models-used)
@@ -16,10 +17,13 @@ Additive Manufacturing defect detection</h3>
 2. [Guide](#guide)
    - [Notebook Structure](#notebook-structure)
    - [Usage](#usage)
-3. [Contributing](#contributing)
-4. [License](#license)
-5. [Contacts](#contacts)
-6. [References](#references)
+      - [Before Starting](#before-starting)
+      - [Classifier on Original Dataset](#classifier-on-original-dataset)
+      - [Generative Models](#generative-models)
+      - [Metrics](#metrics)
+3. [License](#license)
+4. [Contacts](#contacts)
+5. [References](#references)
 
 
 
@@ -104,7 +108,7 @@ The notebook is organized into the following main sections:
   - Conditional VAE (CVAE)
   - VAE
 
-- **Evaluation Metrics**
+- **Metrics**
   - L-PIPS (Learned Perceptual Image Patch Similarity)
   - FID (Fréchet Inception Distance)
   - IS (Inception Score)
@@ -114,28 +118,50 @@ The notebook is organized into the following main sections:
 <!-- USAGE EXAMPLES -->
 #### Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+This section explains the functionality of each part of the Colab notebook described above.
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+##### Before Starting
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+To get started, clone the repository from GitHub.  
+Next, install all the required dependencies and libraries necessary to run the project smoothly.
 
+##### Classifier on Original Dataset
 
----
+In this section, the classifier is trained using the original dataset, both **without augmentation** and **with basic data augmentation techniques** (such as `transforms.RandomHorizontalFlip()`, `transforms.RandomVerticalFlip()`, and `transforms.RandomAdjustSharpness(sharpness_factor=2)`).
 
-<!-- CONTRIBUTING -->
-### Contributing
+The classifier can be trained using either **k-fold cross-validation** or a **standard train-validation split**, depending on the parameters set by the user.
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+##### Generative Models
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+This is the core section of the project, where various Generative Models are implemented and trained to augment the original dataset. The goal is to generate realistic synthetic images that can enhance the training of classifiers, especially when working with limited data.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+The models available in this notebook include:
+- **VAE** (Variational Autoencoder)
+- **CVAE** (Conditional Variational Autoencoder)
+- **GANs** (Generative Adversarial Networks)
+- **SinGAN** (Single Image GAN)
+- **Diffusion Models**
+
+Each model has its own dedicated cells for training and for generating new image samples.  
+Once generated, the synthetic images are automatically saved in the following directory structure:  
+`images/augmented/<model_name>/<experiment_num>`
+
+This modular setup allows easy comparison between the performance of different generative approaches and facilitates the integration of new generated data into the classification pipeline.
+
+##### Metrics
+
+The final section of the notebook is dedicated to the evaluation of the generated synthetic images.  
+Since visual inspection alone is not sufficient to assess the quality and diversity of the outputs, we have implemented a set of widely-used quantitative metrics:
+
+- **FID (Fréchet Inception Distance):** Measures the similarity between the distribution of generated images and real images.
+- **IS (Inception Score):** Evaluates the quality and diversity of generated images based on how well they can be classified.
+- **L-PIPS (Learned Perceptual Image Patch Similarity):** Computes perceptual similarity between images using deep network features.
+- **GEN_train and GEN_test:** Custom metrics designed to evaluate the contribution of generated images to the training and generalization performance of the classifier.
+
+Each metric has a dedicated cell in the notebook.  
+To run an evaluation, the user simply needs to specify the **model name** and **experiment ID** corresponding to the generated samples.  
+This setup enables flexible and repeatable assessment across different models and generations, helping identify the most effective data augmentation strategies.
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
