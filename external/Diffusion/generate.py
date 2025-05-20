@@ -45,7 +45,9 @@ def generate_single_image(pipe, image_path, output_root, prompt, negative_prompt
             num_inference_steps=num_inference_steps
         ).images[0]
 
-        out_name = f"{base_name}_aug{i+1}.png"
+        label = "0" if category == "NoDefects" else "1"
+        out_name = f"{base_name}_{i}_class_{label}.png"
+
         result.save(os.path.join(output_dir, out_name))
 
     print(f"{num_images_per_input} images generated from {image_path} → {output_dir}")
@@ -98,7 +100,10 @@ def generate_images(pipe, input_root, output_root, prompt, negative_prompt, num_
                     num_inference_steps=num_inference_steps
                 ).images[0]
 
-                out_name = f"{os.path.splitext(filename)[0]}_aug{i+1}.png"
+                label = "0" if category == "NoDefects" else "1"
+                base_name = os.path.splitext(filename)[0]
+                out_name = f"{base_name}_{i}_class_{label}.png"
+
                 out_path = os.path.join(output_dir, out_name)
                 result.save(out_path)
 

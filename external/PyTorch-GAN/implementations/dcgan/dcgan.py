@@ -72,13 +72,27 @@ class Discriminator(nn.Module):
         validity = self.adv_layer(out)
         return validity
 
-def main():
-    os.makedirs("images", exist_ok=True)
+class R1(nn.Module):
+    def __init__(self, weight=10.0):
+        super(R1, self).__init__()
+        self.weight = weight
 
+    def forward(self, prediction_real: torch.Tensor, real_sample: torch.Tensor) -> torch.Tensor:
+        grad_real = torch.autograd.grad(
+            outputs=prediction_real.sum(),
+            inputs=real_sample,
+            create_graph=True
+        )[0]
+        reg_loss = self.weight * grad_real.pow(2).view(grad_real.shape[0], -1).sum(1).mean()
+        return reg_loss
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
-    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
+    parser.add_argument("--lr_g", type=float, default=0.0002, help="adam: learning rate for generator")
+    parser.add_argument("--lr_d", type=float, default=0.0002, help="adam: learning rate for discriminator")
     parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -87,12 +101,28 @@ def main():
     parser.add_argument("--channels", type=int, default=1, help="number of image channels")
     parser.add_argument("--sample_interval", type=int, default=400, help="interval between image sampling")
     parser.add_argument("--data_dir", type=str, default="/content/mla_project/images/original/Defects", help="path to dataset")
-    parser.add_argument("--generate_defect", action="store_true", help="generate defect images")
+    parser.add_argument("--generate_defect", type=str, default="True", help="generate defect images")
+    parser.add_argument("--R1_regularization", type=str, default="False", help="use R1 regularization")
+    parser.add_argument("--R1_lambda", type=float, default=10.0, help="lambda for R1 regularization")
+    parser.add_argument("--output_dir", type=str, default=None, help="directory to save models")
     opt = parser.parse_args()
     print(opt)
 
     cuda = True if torch.cuda.is_available() else False
     print("Using GPU" if cuda else "Using CPU")
+
+        # Directory to save models
+    if opt.output_dir is not None:
+        output_dir = os.path.join(opt.output_dir, "saved_models")
+        images_dir = os.path.join(opt.output_dir, "images")   
+    else:
+        output_dir = "saved_models"
+        images_dir = "images"
+
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(images_dir, exist_ok=True)
+    print(f"Output directory: {output_dir}")
+    print(f"Images directory: {images_dir}")
 
     def weights_init_normal(m):
         classname = m.__class__.__name__
@@ -119,7 +149,7 @@ def main():
     discriminator.apply(weights_init_normal)
 
     # Configure data loader
-    if opt.generate_defect:
+    if opt.generate_defect == "True":
         print("Generating defect images...")
         file_paths, labels = get_defect_dataset(opt.data_dir)
     else:
@@ -135,18 +165,22 @@ def main():
     dataloader = DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
 
     # Optimizers
-    optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
-    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+    optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr_g, betas=(opt.b1, opt.b2))
+    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr_d, betas=(opt.b1, opt.b2))
 
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
-    # Directory to save models
-    os.makedirs("saved_models", exist_ok=True)
+    # R1 regularization
+    if opt.R1_regularization == "True":
+        print("Using R1 regularization")
+        r1_regularizer = R1(weight=opt.R1_lambda)
+        if cuda:
+            r1_regularizer.cuda()
 
     # ----------
     #  Training
     # ----------
-
+    print("Starting training...")
     for epoch in range(opt.n_epochs):
         for i, (imgs, _) in enumerate(dataloader):
 
@@ -188,6 +222,12 @@ def main():
             fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
             d_loss = (real_loss + fake_loss) / 2
 
+            # Add R1 penalty if enabled
+            if opt.R1_regularization == "True":
+                real_imgs.requires_grad = True  # Add this line
+                r1_loss = r1_regularizer(discriminator(real_imgs), real_imgs)
+                d_loss += r1_loss
+
             d_loss.backward()
             optimizer_D.step()
 
@@ -198,12 +238,14 @@ def main():
 
             batches_done = epoch * len(dataloader) + i
             if batches_done % opt.sample_interval == 0:
-                save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
-
+                # Save generated images in images_dir
+                save_image(gen_imgs.data[:25], os.path.join(images_dir, f"{batches_done}.png"), nrow=5, normalize=True)
+                
         # Save the models every 50 epochs
         if epoch % 200 == 0 or epoch == opt.n_epochs - 1:
-            torch.save(generator.state_dict(), f"saved_models/generator_epoch_{epoch}.pth")
-            torch.save(discriminator.state_dict(), f"saved_models/discriminator_epoch_{epoch}.pth")
+            # Save the models
+            torch.save(generator.state_dict(), os.path.join(output_dir, f"generator_epoch_{epoch}.pth"))
+            torch.save(discriminator.state_dict(), os.path.join(output_dir, f"discriminator_epoch_{epoch}.pth"))
             print(f"Models saved for epoch {epoch}")
 
 if __name__ == "__main__":
