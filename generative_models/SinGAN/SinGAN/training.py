@@ -25,12 +25,6 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     real_ = imresize(real_, min(512 / real_.shape[2], 512 / real_.shape[3]), opt=opt)
     print('Image size: %d x %d' % (real_.shape[2], real_.shape[3]))
 
-    # print if the R1 penalty is used or not
-    if opt.r1_penalty == 'True':
-        print('R1 penalty is used')
-    else:
-        print('R1 penalty is not used')
-
     # Resize the image to the specified scale1
     real = imresize(real_, opt.scale1, opt)
     # Create a pyramid of images at different scales
@@ -235,21 +229,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # This is because we want to maximize the discriminator output for real images
             errD_real = -output.mean()
 
-            # If the R1 penalty is used, we need to calculate the gradients of the discriminator output with respect to the real images
-            if opt.r1_penalty == 'True':
-                # `gradients` performs the gradient of `output` with respect to `real`
-                gradients = torch.autograd.grad(
-                    outputs=output.sum(), inputs=real, create_graph=True, retain_graph=True, only_inputs=True
-                )[0]
-                # `grad_penalty` calculates the L2 norm of the gradients
-                grad_penalty = (gradients.view(gradients.size(0), -1).norm(2, dim=1) ** 2).mean()
-                # The R1 penalty is calculated as half of the gradient penalty multiplied by the `lambda_r1` parameter
-                r1_penalty = 0.5 * opt.lambda_r1 * grad_penalty  # `opt.lambda_r1` è il peso della penalità
-
-                # The total loss propagated to the discriminator is the sum of the real images loss and the R1 penalty
-                (errD_real + r1_penalty).backward(retain_graph=True)
-            else:
-                errD_real.backward(retain_graph=True)
+            errD_real.backward(retain_graph=True)
             
             D_x = -errD_real.item()
 
