@@ -1,7 +1,7 @@
 from config import get_arguments
 from SinGAN.manipulate import *
 from SinGAN.training import *
-from SinGAN.imresize import imresize
+from external.SinGAN.SinGAN.imresize import imresize
 import SinGAN.functions as functions
 
 
