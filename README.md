@@ -1,5 +1,5 @@
 
-#2025/AM04 – Dataset Augmentation for Additive Manufacturing defect detection
+# 2025/AM04 – Dataset Augmentation for Additive Manufacturing defect detection
 
 This project, titled **"Dataset Augmentation for Additive Manufacturing Defect Detection"** (2025/AM04), was developed for the *Machine Learning in Applications* course at Politecnico di Torino. Our team is identified as group **2025/AM01**.
 
