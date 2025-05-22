@@ -9,18 +9,17 @@ Additive Manufacturing defect detection</h3>
 
 <div id="top"></div>
 
-### Table of Contents
+## Table of Contents
 1. [About The Project](#about-the-project)
    - [Dataset Structure](#dataset-structure)
    - [Technologies and Models Used](#technologies-and-models-used)
    - [Functional Specification](#functional-specification)
-2. [Guide](#guide)
-   - [Notebook Structure](#notebook-structure)
-   - [Usage](#usage)
-      - [Before Starting](#before-starting)
-      - [Classifier on Original Dataset](#classifier-on-original-dataset)
-      - [Generative Models](#generative-models)
-      - [Metrics](#metrics)
+   - [Project Structure](#project-structure)
+2. [Usage](#usage)
+   - [Before Starting](#before-starting)
+   - [Classifier on Original Dataset](#classifier-on-original-dataset)
+   - [Generative Models](#generative-models)
+   - [Metrics](#metrics)
 3. [License](#license)
 4. [Contacts](#contacts)
 5. [References](#references)
@@ -30,146 +29,158 @@ Additive Manufacturing defect detection</h3>
 ---
 
 <!-- ABOUT THE PROJECT -->
-### About The Project
+## About The Project
 <p  align="center">
   <img src="https://i.ibb.co/ffwLDDn/Additive-Manufaturing.png" alt="Additive Manufacturing" width="300" />
 </p>
 
-Metal Additive Manufacturing (AM) is a pillar of Industry 4.0, offering many attractive advantages over traditional subtractive fabrication technologies. However, numerous quality issues still pose significant obstacles to mass production. In this context, the use of Computer Vision and Machine Learning algorithms plays a crucial role. Nevertheless, their effectiveness remains limited by the scarcity of training data and the challenges involved in accessing and integrating process data throughout the AM fabrication workflow. To address this problem, we have employed various generative algorithms to synthesize new images and expand the available dataset. Additionally, a defect detection algorithm is being developed to accurately locate anomalies during the manufacturing process.
+Metal Additive Manufacturing (AM) is a cornerstone of Industry 4.0, offering significant advantages over traditional subtractive manufacturing processes. Despite its potential, AM still faces several quality assurance challenges that limit its adoption in large-scale production. In this context, Computer Vision and Machine Learning (ML) algorithms can support the automation of quality control tasks. However, training accurate classifiers to distinguish between defective and non-defective parts requires a large and balanced dataset—something often unavailable in real production lines. In particular, generating a sufficient number of images showing actual defects is costly and time-consuming due to the expensive nature of the AM process and the difficulty of reproducing specific anomalies on demand.
 
-The category of defects addressed are the following:
+To address this limitation, we employ generative models to synthesize realistic defect images and augment the available dataset. This data augmentation strategy enhances the training process by improving class balance and increasing the model’s generalization capability, without requiring additional defective parts to be physically produced.
 
-1. **Holes**: localised lacks of metallic powder that create small dark areas in the powder bed image. They are generally due to a bad regulation of the powder dosing factor, leading to local lacks of powder.
-2. **Spattering**: droplets of melted metal ejected from the melt pool and landed in the surroundings.
-3. **Incandescence**: high-intensity areas in the powder bed layer. It is generally a consequence of the inability of the melt pool to cool down correctly, due to an excess of laser energy power.
-4. **Horizontal defects**: dark horizontal lines in the layer image caused by geometric imperfection of the piece that leads to the incorrect spreading of the metallic powder.
-5. **Vertical defects**: vertical undulation of the powder bed along the direction of the recoater’s path, consisting in alternated dark and light lines. The origin is either a mechanical defect of the recoater’s surface or a mechanical interference between the object and the recoater.
+### Functional Specification
 
-In the following image is reported an example of the defects.
-<p align="center">
-  <img src="https://i.ibb.co/0yPGZL7r/Defects-Examples.png" alt="Examples of Defects" width=600 />
-</p>
+Building on this idea, our project focuses on designing and evaluating a complete pipeline for defect detection in AM parts, combining classification and generative techniques. Specifically:
 
+- **Baseline Classification**: We trained a ResNet50 classifier on the original, non-augmented dataset to distinguish between defective and non-defective components.
 
-#### Dataset structure
+- **Generative Model Training**: We trained several generative models on the original images to learn the distribution of defects:
+   - Variational Autoencoders (VAE)
+   - Conditional Variational Autoencoders (CVAE)
+   - Generative Adversarial Networks (GANs)
+   - Single Image Generative Adversarial Networks (SinGANs)
+   - Diffusion Models
+
+- **Synthetic Image Generation**: Each model was used to generate synthetic images representing defective and non-defective parts.
+
+- **Evaluation**:  We assessed the quality and utility of the generated images using multiple metrics: LPIPS (Learned Perceptual Image Patch Similarity), FID (Fréchet Inception Distance), Inception Score (IS), GEN_train / GEN_test (classifier generalization scores).
+
+### Dataset structure
 
 The dataset is composed of two folders:
-  - **Defects**: contains a set of images with several defects like holes, splattering, etc. They consist of 47 images of different layers with one or multiple defects in each of them without labeling
-  - **NoDefects**: contains plain images of the powder bed without defects. They consists of 33 images without defects
+  - **Defects**: contains 47 images of different layers with one or multiple defects in each of them without labeling.
+  - **NoDefects**: contains 33 images of the powder bed without defects.
 
 
-#### Technologies and Models Used
+### Technologies and Models Used
 
 - Python
 - PyTorch
 - Variational Autoencoders (VAE)
-- Conditional VAEs (CVAE)
+- Conditional Variational Autoencoders (CVAE)
 - Generative Adversarial Networks (GANs)
-- SinGAN
+- Single Image Generative Adversarial Networks (SinGANs)
 - Diffusion Models
-- Evaluation Metrics: FID, L-PIPS, IS, GEN with training set and GEN with test set
+- Evaluation Metrics: LPIPS, GEN-Train/GEN-Test, Direct Analysis of Generated Images, FID, IS
 
+### Project Structure
 
-#### Functional Specification
+The project structure is the following:
 
-This application focuses on generating synthetic datasets for the Additive Manufacturing domain.  
-Its main purpose is to overcome the scarcity of defective samples by using generative models such as Variational Autoencoders (VAE), Conditional VAEs (CVAE), Generative Adversarial Networks (GANs), and Diffusion Models.
-
-The generated images are used to train classifiers for defect detection, improving performance despite the limited size of the original dataset.
+```
+MLA-PRJ-23-PROJECT-AM04/
+│
+├── generative_models/             # All generative model implementations (training + image generation)
+│   ├── Diffusion/                 # Diffusion Models 
+│   ├── PyTorch-GAN/              # Generative Adversarial Networks (GANs)
+│   ├── Pytorch-VAE/              # Variational Autoencoders (VAEs) and Conditional Variational Autoencoders (CVAEs)
+│   └── SinGAN/                   # Single-image GAN
+│
+├── images/                        # Dataset storage
+│   ├── original/                 # Original images
+│   └── augmented/               # Augmented images grouped by method
+│
+├── metrics/                       # Metric computation scripts and results
+│
+├── src/                           # Core source code
+│   ├── __init__.py
+│   ├── data_loader.py           # Dataset loading and preprocessing
+│   ├── defect_detection.ipynb   # Main project notebook (entry point)
+│   ├── model.py                 # Classifier definition (ResNet)
+│   └── train.py                 # Classifier Training logic
+│
+├── .gitignore                     # Files/folders to be ignored by Git
+├── .gitmodules                    # Git submodules (e.g., external repos)
+├── LICENSE                        # License file
+└── README.md                      # Project documentation (this file)
+```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ---
 
-
-<!-- GUIDE -->
-### Guide
-
-The following guide provides step-by-step instructions to navigate and use the Colab notebook, which covers all stages of the project: data preparation, model training, image generation, and evaluation.  
-The notebook is located in the `src` folder, called `defect_detection.ipynb`.
-
-#### Notebook Structure
-
-The notebook is organized into the following main sections:
-
-- **Before Starting**
-  - Clone the repository
-  - Install dependencies
-  - Import libraries
-
-- **Classifier on Original Dataset**
-  - Training without augmentation
-  - Training with basic augmentation
-
-- **Generative Models**
-  - SinGAN
-  - GANs
-  - Diffusion Models
-  - Conditional VAE (CVAE)
-  - VAE
-
-- **Metrics**
-  - L-PIPS (Learned Perceptual Image Patch Similarity)
-  - FID (Fréchet Inception Distance)
-  - IS (Inception Score)
-  - GEN (evaluated on training and test sets)
-
-
 <!-- USAGE EXAMPLES -->
-#### Usage
+## Usage
+The following guide provides step-by-step instructions to navigate and use the notebook `defect_detection.ipynb`, which covers all stages of the project: data preparation, model training, image generation, and evaluation. 
 
-This section explains the functionality of each part of the Colab notebook described above.
+**Note**: This notebook is intended to be run on Google Colab. However, the code is not limited to Colab — you can also run it on other machines equipped with GPUs. Within the notebook, you’ll find clear references for both training generative models (e.g., GANs, VAEs, SinGAN, Diffusion) and generating new images once a model is trained. These references are provided directly in the code cells and markdown comments to help you understand and reproduce each step individually if needed.
 
-##### Before Starting
+### Before Starting
 
-To get started, clone the repository from GitHub.  
-Next, install all the required dependencies and libraries necessary to run the project smoothly.
+To get started, clone the repository from GitHub. Next, install all the required dependencies and libraries necessary. 
 
-##### Classifier on Original Dataset
+### Classifier on Original Dataset
 
-In this section, the classifier is trained using the original dataset, both **without augmentation** and **with basic data augmentation techniques** (such as `transforms.RandomHorizontalFlip()`, `transforms.RandomVerticalFlip()`, and `transforms.RandomAdjustSharpness(sharpness_factor=2)`).
+In this section, a classifier is trained on the original dataset to distinguish between images with defects and images without defects, both *without augmentation* and *with basic data augmentation techniques* (such as `RandomHorizontalFlip`, `RandomVerticalFlip`, and `RandomAdjustSharpness`).
 
-The classifier can be trained using either **k-fold cross-validation** or a **standard train-validation split**, depending on the parameters set by the user.
+The classifier can be trained using either k-fold cross-validation or a standard train-validation split, depending on the parameters set by the user.
 
-##### Generative Models
+### Generative Models
 
-This is the core section of the project, where various Generative Models are implemented and trained to augment the original dataset. The goal is to generate realistic synthetic images that can enhance the training of classifiers, especially when working with limited data.
+This is the core section of the project, where various Generative Models (listed in the previous section) are implemented and trained to augment the original dataset. All model implementations are contained within the `generative_models` folder and its respective subfolders. Each model has its own dedicated cells for training and for generating new image samples. 
 
-The models available in this notebook include:
-- **VAE** (Variational Autoencoder)
-- **CVAE** (Conditional Variational Autoencoder)
-- **GANs** (Generative Adversarial Networks)
-- **SinGAN** (Single Image GAN)
-- **Diffusion Models**
+For example, training a Conditional VAE can be performed with the following command:
 
-Each model has its own dedicated cells for training and for generating new image samples.  
-Once generated, the synthetic images are automatically saved in the following directory structure:  
-`images/augmented/<model_name>/<experiment_num>`
+```
+!python /content/mla_project/generative_models/Pytorch-VAE/train_cvae.py \
+    --data_dir "/content/mla_project/images/original" \
+    --batch_size 4 \
+    --max_epoch 100 \
+    --latent_size 128 \
+    --image_size 512
+```
+To generate new images using a trained Conditional VAE model, you can run:
+```
+!python /content/mla_project/generative_models/Pytorch-VAE/generate.py \
+    --checkpoint ./checkpoints/model_99.pt \
+    --latent_size 128 \
+    --image_size 512 \
+    --num_images 10 \
+    --device cuda \
+    --output_dir generated_images
 
-This modular setup allows easy comparison between the performance of different generative approaches and facilitates the integration of new generated data into the classification pipeline.
+```
+*Note: Both training and generation scripts accept various command-line arguments to customize parameters such as batch size, number of epochs, latent size, image size, device, and more.*
 
-##### Metrics
+### Metrics
 
 The final section of the notebook is dedicated to the evaluation of the generated synthetic images.  
-Since visual inspection alone is not sufficient to assess the quality and diversity of the outputs, we have implemented a set of widely-used quantitative metrics:
-
-- **FID (Fréchet Inception Distance):** Measures the similarity between the distribution of generated images and real images.
-- **IS (Inception Score):** Evaluates the quality and diversity of generated images based on how well they can be classified.
-- **L-PIPS (Learned Perceptual Image Patch Similarity):** Computes perceptual similarity between images using deep network features.
-- **GEN_train and GEN_test:** Custom metrics designed to evaluate the contribution of generated images to the training and generalization performance of the classifier.
+Since visual inspection alone is not sufficient to assess the quality and diversity of the outputs, we have implemented a set of widely-used quantitative metrics: FID (Fréchet Inception Distance), IS (Inception Score), LPIPS (Learned Perceptual Image Patch Similarity) and GEN_train and GEN_test. 
 
 Each metric has a dedicated cell in the notebook.  
 To run an evaluation, the user simply needs to specify the **model name** and **experiment ID** corresponding to the generated samples.  
-This setup enables flexible and repeatable assessment across different models and generations, helping identify the most effective data augmentation strategies.
 
+For example, to calculate the LPIPS score on CVAE-generated images from experiment 1:
+
+```
+original_dir = "/content/mla_project/images/original/"
+generated_dir = "/content/mla_project/images/augmented/"
+model = "CVAE"
+experiment = "Experiment_1"
+
+!python /content/mla_project/metrics/lpips_score.py --cuda \
+    --original_dir {original_dir} \
+    --generated_dir {generated_dir} \
+    --model {model} \
+    --experiment {experiment}
+```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
 
 ---
 
 <!-- LICENSE -->
-### License
+## License
 
 This project is distributed under the BSD 3-Clause License, a permissive open-source license that allows you to freely use, modify, and distribute the code, even for commercial purposes, as long as you include the original copyright notice and disclaimers. It does not provide any warranty.
 
@@ -181,7 +192,7 @@ For more details, please refer to the `LICENSE.txt` file.
 ---
 
 <!-- CONTACTS -->
-### Contacts
+## Contacts
 
 Ponzuoli Giacomo - s332271@studenti.polito.it
 Modi Giorgia - s330519@studenti.polito.it
@@ -193,8 +204,15 @@ Ammirati Marco - s300269@studenti.polito.it
 ---
 
 <!-- REFERENCES -->
-### References
+## References
 
-Tamar Rott Shaham, Tali Dekel, Tomer Michaeli. "SinGAN: Learning a Generative Model from a Single Natural Image" (2019)
+We based part of our work on the implementations provided by the following repositories and papers:
+
+- Tamar Rott Shaham, Tali Dekel, Tomer Michaeli. *"SinGAN: Learning a Generative Model from a Single Natural Image"* (2019)  
+  Implementation available at: [https://github.com/tamarott/SinGAN](https://github.com/tamarott/SinGAN)
+
+- Hugging Face Diffusers library:  
+  [https://github.com/huggingface/diffusers](https://github.com/huggingface/diffusers)
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
