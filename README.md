@@ -11,19 +11,18 @@ Additive Manufacturing defect detection</h3>
 
 ## Table of Contents
 1. [About The Project](#about-the-project)
+   - [Functional Specification](#functional-specification)
    - [Dataset Structure](#dataset-structure)
    - [Technologies and Models Used](#technologies-and-models-used)
-   - [Functional Specification](#functional-specification)
    - [Project Structure](#project-structure)
-2. [Usage](#usage)
+3. [Usage](#usage)
    - [Before Starting](#before-starting)
    - [Classifier on Original Dataset](#classifier-on-original-dataset)
    - [Generative Models](#generative-models)
    - [Metrics](#metrics)
-3. [License](#license)
-4. [Contacts](#contacts)
-5. [References](#references)
-
+4. [License](#license)
+5. [Contributors](#contributors)
+6. [References](#references)
 
 
 ---
@@ -113,11 +112,11 @@ MLA-PRJ-23-PROJECT-AM04/
 ## Usage
 The following guide provides step-by-step instructions to navigate and use the notebook `defect_detection.ipynb`, which covers all stages of the project: data preparation, model training, image generation, and evaluation. 
 
-**Note**: This notebook is intended to be run on Google Colab. However, the code is not limited to Colab — you can also run it on other machines equipped with GPUs. Within the notebook, you’ll find clear references for both training generative models (e.g., GANs, VAEs, SinGAN, Diffusion) and generating new images once a model is trained. These references are provided directly in the code cells and markdown comments to help you understand and reproduce each step individually if needed.
-
 ### Before Starting
 
 To get started, clone the repository from GitHub. Next, install all the required dependencies and libraries necessary. 
+
+**Note:** This project requires a machine equipped with a GPU to ensure reasonable training and generation times. We used Google Colab as the primary environment for running the experiments, due to its availability of free GPU resources and ease of use.
 
 ### Classifier on Original Dataset
 
@@ -191,13 +190,13 @@ For more details, please refer to the `LICENSE.txt` file.
 
 ---
 
-<!-- CONTACTS -->
-## Contacts
+<!-- Contributors -->
+## Contributors
 
-Ponzuoli Giacomo - s332271@studenti.polito.it
-Modi Giorgia - s330519@studenti.polito.it
-Genova Erika - s332044@studenti.polito.it
-Ammirati Marco - s300269@studenti.polito.it
+- [Ponzuoli Giacomo](https://github.com/giacomoponzuoli3)
+- [Modi Giorgia](https://github.com/GiorgiaModi)
+- [Genova Erika](https://github.com/ErikaGenova)
+- [Ammirati Marco](https://github.com/TheGoodMark)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
