@@ -35,7 +35,7 @@ Additive Manufacturing defect detection</h3>
   <img src="https://i.ibb.co/ffwLDDn/Additive-Manufaturing.png" alt="Additive Manufacturing" width="300" />
 </p>
 
-Metal Additive Manufacturing (AM) is a pillar of the Industry 4.0, with many attractive advantages compared to traditional subtractive fabrication technologies. However, there are many quality issues that can be an obstacle for mass production. In this context, the use of Generative Models algorithms have a very important role. Nonetheless, they are up to this date limited by the scarcity of data for the training, as well as by the difficulty of accessing and integrating the AM process data throughout the fabrication. To tackle this problem, an generative model algorithm is required to increase the number of images available to train the classifier on the generated dataset. 
+Metal Additive Manufacturing (AM) is a pillar of Industry 4.0, offering many attractive advantages over traditional subtractive fabrication technologies. However, numerous quality issues still pose significant obstacles to mass production. In this context, the use of Computer Vision and Machine Learning algorithms plays a crucial role. Nevertheless, their effectiveness remains limited by the scarcity of training data and the challenges involved in accessing and integrating process data throughout the AM fabrication workflow. To address this problem, we have employed various generative algorithms to synthesize new images and expand the available dataset. Additionally, a defect detection algorithm is being developed to accurately locate anomalies during the manufacturing process.
 
 The category of defects addressed are the following:
 
