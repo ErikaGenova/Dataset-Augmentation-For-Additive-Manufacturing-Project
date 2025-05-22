@@ -210,8 +210,7 @@ We based part of our work on the implementations provided by the following repos
 - Tamar Rott Shaham, Tali Dekel, Tomer Michaeli. *"SinGAN: Learning a Generative Model from a Single Natural Image"* (2019)  
   Implementation available at: [https://github.com/tamarott/SinGAN](https://github.com/tamarott/SinGAN)
 
-- Hugging Face Diffusers library:  
-  [https://github.com/huggingface/diffusers](https://github.com/huggingface/diffusers)
+- Hugging Face Diffusers library: [https://github.com/huggingface/diffusers](https://github.com/huggingface/diffusers)
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
