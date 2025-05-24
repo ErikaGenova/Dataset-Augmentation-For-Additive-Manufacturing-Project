@@ -9,7 +9,7 @@ from skimage import io as img
 from skimage import color, morphology, filters
 #from skimage import morphology
 #from skimage import filters
-from external.SinGAN.SinGAN.imresize import imresize
+from SinGAN.imresize import imresize
 import os
 import random
 from sklearn.cluster import KMeans
