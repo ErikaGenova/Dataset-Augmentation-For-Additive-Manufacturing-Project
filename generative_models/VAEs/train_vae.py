@@ -8,7 +8,7 @@ import torch.nn. functional as F
 import torch.optim as optim
 import os
 import argparse
-from data_loader import get_dataloaders
+from data_loader import get_dataloaders, get_defect_dataset, get_no_defect_dataset, get_dataloader_by_class
 
 
 class Vae(nn.Module):
@@ -173,6 +173,18 @@ def load_data(data_dir, batch_size, num_workers, image_size):
 
     return train_loader, test_loader
 
+def load_data_by_class(file_paths, labels, batch_size, num_workers, image_size):
+    train_loader, test_loader = get_dataloader_by_class(
+        file_paths=file_paths,
+        labels=labels,
+        batch_size=batch_size,
+        val_split=0.2,  # Adjust validation split ratio if needed
+        num_workers=num_workers,
+        random_seed=42,  # Ensure reproducibility
+        image_size=image_size,
+        )
+    return train_loader, test_loader
+
 def save_model(model, epoch):
     if not os.path.isdir("./checkpoints"):
         os.mkdir("./checkpoints")
@@ -194,7 +206,7 @@ if __name__ == "__main__":
     parser.add_argument("--latent_size", type=int, default=128, help="Size of the latent space.")
     parser.add_argument("--image_size", type=int, default=512, help="Size of the input images.")
     parser.add_argument("--kld_weight", type=float, default=1, help="Weight for the KLD loss term.")
-
+    parser.add_argument("--class_name", type=str, default="Defects", help="Class name for the dataset.")
     args = parser.parse_args()
 
     # Assign variables from parsed arguments
@@ -208,13 +220,27 @@ if __name__ == "__main__":
     image_size = args.image_size
     data_dir = args.data_dir
     kld_weight = args.kld_weight
+    class_name = args.class_name
     image_size
 
     # Load data and initialize model
-    train_loader, test_loader = load_data(data_dir, batch_size, num_workers, image_size)
-    print("Dataloader created.")
-    model = Vae(latent_size, image_size).to(device)
-    print("Model created.")
+    if class_name == "Defects":
+        file_paths, labels = get_defect_dataset(data_dir)
+    elif class_name == "NoDefects":
+        file_paths, labels = get_no_defect_dataset(data_dir)
+    else:
+        raise ValueError("Invalid class name. Use 'Defects' or 'NoDefects'.")
+    
+    train_loader, test_loader = load_data_by_class(
+        file_paths=file_paths,
+        labels=labels,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        image_size=image_size,
+    )
+    print("Dataloader created for class: {}".format(class_name))
+    model = Vae(latent_size=latent_size, image_size=image_size).to(device)
+    print("Model created")
 
     # If the training is interrupted, you can load the model from the last checkpoint and continue training
     if load_epoch > 0:

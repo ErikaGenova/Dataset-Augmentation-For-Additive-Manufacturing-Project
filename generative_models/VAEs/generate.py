@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from train_cvae import Cvae, plot
 from train_vae import Vae
+import argparse
+import os
 
 def load_model(checkpoint_path, latent_size, image_size, device, model_type="cvae"):
     """Load the model from a checkpoint."""
@@ -48,8 +50,6 @@ def save_generated_images(images, labels, output_dir="generated_images", model_t
     print(f"Generated images saved to {output_dir}")
 
 if __name__ == "__main__":
-    import argparse
-    import os
 
     parser = argparse.ArgumentParser(description="Generate images using a trained CVAE model.")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to the model checkpoint.")

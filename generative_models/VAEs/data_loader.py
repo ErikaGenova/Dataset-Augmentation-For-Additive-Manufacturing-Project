@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch
 import torchvision
+import numpy as np
 
 # To Tensor and Normalize
 transform_1 = {
@@ -88,3 +89,52 @@ def get_dataloaders(data_dir, batch_size=16, val_split=0.2, num_workers=4, rando
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, val_loader
+
+
+def get_dataloader_by_class(file_paths, labels, batch_size=16, val_split=0.2, num_workers=4, random_seed=42, image_size=512):
+    # train/val split
+    train_idx, val_idx = train_test_split(
+        list(range(len(file_paths))),
+        test_size=val_split,
+        random_state=random_seed
+    )
+
+    train_paths = [file_paths[i] for i in train_idx]
+    train_labels = [labels[i] for i in train_idx]
+    val_paths = [file_paths[i] for i in val_idx]
+    val_labels = [labels[i] for i in val_idx]
+
+    # Define transforms
+    transform = transforms.Compose([
+        transforms.Resize((image_size, image_size)),
+        transforms.ToTensor(),
+    ])
+
+    # Crea i dataset personalizzati
+    train_dataset = DefectDataset(train_paths, train_labels, transform=transform)
+    test_dataset = DefectDataset(val_paths, val_labels, transform=transform)
+
+    # Crea i dataloader
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    return train_loader, test_loader
+
+def get_defect_dataset(data_dir):
+    file_paths, labels = [], []
+    # return filepaths and labels equal to 1
+    for ext in ('png', 'jpg', 'jpeg'):
+        files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
+        file_paths += files
+    labels = np.ones(len(file_paths))
+    return file_paths, labels
+
+
+def get_no_defect_dataset(data_dir):
+    file_paths, labels = [], []
+    # return filepaths and labels equal to 0
+    for ext in ('png', 'jpg', 'jpeg'):
+        files = glob.glob(os.path.join(data_dir, f'*.{ext}'))
+        file_paths += files
+    labels = np.zeros(len(file_paths))
+    return file_paths, labels
