@@ -83,22 +83,22 @@ MLA-PRJ-23-PROJECT-AM04/
 │
 ├── generative_models/             # All generative model implementations (training + image generation)
 │   ├── Diffusion/                 # Diffusion Models 
-│   ├── PyTorch-GAN/              # Generative Adversarial Networks (GANs)
-│   ├── Pytorch-VAE/              # Variational Autoencoders (VAEs) and Conditional Variational Autoencoders (CVAEs)
-│   └── SinGAN/                   # Single-image GAN
+│   ├── GANs/                      # Generative Adversarial Networks (GANs)
+│   ├── VAEs/                      # Variational Autoencoders (VAEs) and Conditional Variational Autoencoders (CVAEs)
+│   └── SinGAN/                    # Single-image GAN
 │
 ├── images/                        # Dataset storage
-│   ├── original/                 # Original images
-│   └── augmented/               # Augmented images grouped by method
+│   ├── original/                  # Original images
+│   └── augmented/                 # Augmented images grouped by method
 │
 ├── metrics/                       # Metric computation scripts and results
 │
 ├── src/                           # Core source code
 │   ├── __init__.py
-│   ├── data_loader.py           # Dataset loading and preprocessing
-│   ├── defect_detection.ipynb   # Main project notebook (entry point)
-│   ├── model.py                 # Classifier definition (ResNet)
-│   └── train.py                 # Classifier Training logic
+│   ├── data_loader.py             # Dataset loading and preprocessing
+│   ├── defect_detection.ipynb     # Main project notebook (entry point)
+│   ├── model.py                   # Classifier definition (ResNet)
+│   └── train.py                   # Classifier Training logic
 │
 ├── .gitignore                     # Files/folders to be ignored by Git
 ├── .gitmodules                    # Git submodules (e.g., external repos)
